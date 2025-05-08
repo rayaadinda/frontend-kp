@@ -26,8 +26,6 @@ export function LoginForm() {
 		setIsLoading(true)
 
 		try {
-			console.log("Mencoba login dengan:", { email, password })
-
 			// Call the login API endpoint
 			const response = await fetch(`${API_URL}/auth/login`, {
 				method: "POST",

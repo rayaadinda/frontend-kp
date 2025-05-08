@@ -35,7 +35,7 @@ import {
 const data = {
 	navMain: [
 		{
-			title: "Dasboard",
+			title: "Dashboard",
 			url: "/dashboard",
 			icon: IconDashboard,
 		},
@@ -50,7 +50,7 @@ const data = {
 			icon: IconReport,
 		},
 		{
-			title: "checkout",
+			title: "Checkout",
 			url: "/checkout",
 			icon: IconReport,
 		},

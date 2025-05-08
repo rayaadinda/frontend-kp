@@ -87,33 +87,7 @@ export default function InventoryPage() {
 				setIsLoggedIn(true)
 			}
 
-			// For development, you can use mock data if API isn't available
-			// Comment this section out when your API is ready
-			if (BYPASS_AUTH_FOR_DEV && !API_URL.includes("localhost")) {
-				console.warn("Using mock data for development")
-				setInventory([
-					{
-						id: 1,
-						name: "Wire AWG 22 Colour Red",
-						category: "Wires",
-						quantity: 20130,
-						price: 0,
-						status: "In Stock",
-						lastUpdated: new Date().toLocaleDateString(),
-					},
-					{
-						id: 2,
-						name: "Cable Ties Natural",
-						category: "Accessories",
-						quantity: 5,
-						price: 0,
-						status: "Low Stock",
-						lastUpdated: new Date().toLocaleDateString(),
-					},
-				])
-				setLoading(false)
-				return
-			}
+			
 
 			// Actual API call
 			const response = await fetch(`${API_URL}/inventory`, { headers })
@@ -183,7 +157,10 @@ export default function InventoryPage() {
 										)}
 									</div>
 								) : (
-									<InventoryDataTable data={inventory} />
+									<InventoryDataTable
+										data={inventory}
+										onRefresh={fetchInventory}
+									/>
 								)}
 							</div>
 						</div>
