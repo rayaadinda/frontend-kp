@@ -271,7 +271,7 @@ export default function ReportPage() {
 
 			// Make the API call
 			const response = await fetch(
-				`${API_URL}/inventory/checkout-history?${queryParams}`,
+				`${API_URL}/api/inventory/checkout-history?${queryParams}`,
 				{
 					method: "GET",
 					headers,

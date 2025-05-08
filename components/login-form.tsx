@@ -83,7 +83,7 @@ export function LoginForm() {
 
 				// Redirect after login
 				const returnUrl = searchParams.get("returnUrl") || "/dashboard"
-				router.push(returnUrl)
+				window.location.href = returnUrl
 			} else {
 				throw new Error(
 					data.message || "Login gagal - tidak ada token diterima"
