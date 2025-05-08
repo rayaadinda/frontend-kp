@@ -17,7 +17,6 @@ export function LoginForm() {
 	const [showPassword, setShowPassword] = useState(false)
 	const [error, setError] = useState("")
 	const [isLoading, setIsLoading] = useState(false)
-	const router = useRouter()
 	const searchParams = useSearchParams()
 
 	const handleSubmit = async (e: React.FormEvent) => {
