@@ -55,7 +55,7 @@ export function LoginForm() {
 				try {
 					const errorData = await response.json()
 					errorMessage = errorData.message || `Error server: ${response.status}`
-				} catch  {
+				} catch {
 					errorMessage = `Error server: ${response.status}. Server tidak mengembalikan JSON yang valid.`
 				}
 
@@ -66,7 +66,7 @@ export function LoginForm() {
 			let data
 			try {
 				data = await response.json()
-			} catch  {
+			} catch {
 				throw new Error(
 					"Respons tidak valid dari server: Bukan JSON yang valid"
 				)
@@ -81,8 +81,8 @@ export function LoginForm() {
 					localStorage.setItem("user", JSON.stringify(data.user))
 				}
 
-				// Check if there's a returnUrl and redirect accordingly
-				const returnUrl = searchParams.get("returnUrl") || "/inventory"
+				// Redirect after login
+				const returnUrl = searchParams.get("returnUrl") || "/dashboard"
 				router.push(returnUrl)
 			} else {
 				throw new Error(
@@ -97,29 +97,6 @@ export function LoginForm() {
 		} finally {
 			setIsLoading(false)
 		}
-	}
-
-	// Alternative login for testing with dummy credentials (for development only)
-	const handleDummyLogin = () => {
-		setIsLoading(true)
-		setTimeout(() => {
-			// Create a dummy token
-			const dummyToken = "dummy-token-for-testing-" + Date.now()
-			const dummyUser = {
-				id: "1",
-				username: "admin",
-				email: "admin@example.com",
-				role: "admin",
-			}
-
-			// Store in localStorage
-			localStorage.setItem("token", dummyToken)
-			localStorage.setItem("user", JSON.stringify(dummyUser))
-
-			// Redirect
-			const returnUrl = searchParams.get("returnUrl") || "/inventory"
-			router.push(returnUrl)
-		}, 1000)
 	}
 
 	return (
@@ -184,16 +161,6 @@ export function LoginForm() {
 					{isLoading ? "Sedang masuk..." : "Masuk"}
 				</Button>
 			</form>
-			<div className="mt-4 text-center text-sm">
-				<Button
-					variant="ghost"
-					className="text-sm text-blue-600 dark:text-blue-400"
-					onClick={handleDummyLogin}
-					disabled={isLoading}
-				>
-					Gunakan login dummy untuk pengembangan
-				</Button>
-			</div>
 		</div>
 	)
 }
