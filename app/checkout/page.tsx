@@ -79,7 +79,7 @@ export default function CheckoutPage() {
 				return
 			}
 
-			const response = await fetch(`${API_URL}/inventory`, {
+			const response = await fetch(`${API_URL}/api/inventory`, {
 				headers: {
 					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
@@ -251,7 +251,7 @@ export default function CheckoutPage() {
 				})),
 			}
 
-			const response = await fetch(`${API_URL}/inventory/checkout`, {
+			const response = await fetch(`${API_URL}/api/inventory/checkout`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

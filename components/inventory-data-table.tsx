@@ -91,7 +91,7 @@ export function InventoryDataTable({
 		setIsSaving(true)
 		try {
 			const token = localStorage.getItem("token")
-			const res = await fetch(`${API_URL}/inventory/${editRowId}`, {
+			const res = await fetch(`${API_URL}/api/inventory/${editRowId}`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
@@ -117,7 +117,7 @@ export function InventoryDataTable({
 		setIsDeleting(true)
 		try {
 			const token = localStorage.getItem("token")
-			const res = await fetch(`${API_URL}/inventory/${id}`, {
+			const res = await fetch(`${API_URL}/api/inventory/${id}`, {
 				method: "DELETE",
 				headers: {
 					...(token ? { Authorization: `Bearer ${token}` } : {}),

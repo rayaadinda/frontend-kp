@@ -91,7 +91,7 @@ export default function InventoryPage() {
 			}
 
 			// Actual API call
-			const response = await fetch(`${API_URL}/inventory`, { headers })
+			const response = await fetch(`${API_URL}/api/inventory`, { headers })
 
 			if (!response.ok) {
 				throw new Error(`Failed to fetch inventory: ${response.status}`)

@@ -65,7 +65,7 @@ export default function AddInventoryItemPage() {
 				quantity: parseInt(formData.quantity, 10),
 			}
 
-			const response = await fetch(`${API_URL}/inventory`, {
+			const response = await fetch(`${API_URL}/api/inventory`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
