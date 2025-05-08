@@ -35,6 +35,13 @@ export function LoginForm() {
 				body: JSON.stringify({ email, password }),
 			})
 
+			// Handle rate limiting specifically
+			if (response.status === 429) {
+				throw new Error(
+					"Terlalu banyak permintaan. Silakan coba lagi dalam beberapa saat."
+				)
+			}
+
 			// Check if the response is OK before trying to parse JSON
 			if (!response.ok) {
 				if (response.status === 404) {
@@ -48,7 +55,7 @@ export function LoginForm() {
 				try {
 					const errorData = await response.json()
 					errorMessage = errorData.message || `Error server: ${response.status}`
-				} catch (e) {
+				} catch  {
 					errorMessage = `Error server: ${response.status}. Server tidak mengembalikan JSON yang valid.`
 				}
 
@@ -59,7 +66,7 @@ export function LoginForm() {
 			let data
 			try {
 				data = await response.json()
-			} catch (e) {
+			} catch  {
 				throw new Error(
 					"Respons tidak valid dari server: Bukan JSON yang valid"
 				)
@@ -82,9 +89,11 @@ export function LoginForm() {
 					data.message || "Login gagal - tidak ada token diterima"
 				)
 			}
-		} catch (err: any) {
-			console.error("Error login:", err)
-			setError(err.message || "Login gagal")
+		} catch (error: unknown) {
+			console.error("Error login:", error)
+			const errorMessage =
+				error instanceof Error ? error.message : "Login gagal"
+			setError(errorMessage)
 		} finally {
 			setIsLoading(false)
 		}

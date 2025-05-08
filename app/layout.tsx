@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { AuthCheck } from "@/components/auth-check"
 import { Toaster } from "@/components/ui/sonner"
+import PageTransition from "@/components/PageTransition"
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -38,7 +39,7 @@ export default function RootLayout({
 						enableSystem
 						disableTransitionOnChange
 					>
-						{children}
+						<PageTransition>{children}</PageTransition>
 					</ThemeProvider>
 				</AuthCheck>
 			</body>

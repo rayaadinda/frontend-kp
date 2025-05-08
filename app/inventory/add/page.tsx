@@ -97,9 +97,10 @@ export default function AddInventoryItemPage() {
 			} else {
 				throw new Error(data.message || "Failed to add item")
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error adding item:", err)
-			setError(err.message || "Failed to add item")
+			const errorMsg = err instanceof Error ? err.message : "Failed to add item"
+			setError(errorMsg)
 		} finally {
 			setIsSubmitting(false)
 		}

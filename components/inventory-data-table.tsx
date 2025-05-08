@@ -13,11 +13,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
 	IconEdit,
-	IconEye,
 	IconPlus,
 	IconSearch,
 	IconTrash,
-	IconCheck,
 	IconInfoCircle,
 	IconLoader2,
 } from "@tabler/icons-react"
@@ -32,7 +30,6 @@ import {
 	DialogTitle,
 	DialogFooter,
 } from "@/components/ui/dialog"
-import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
@@ -108,7 +105,7 @@ export function InventoryDataTable({
 			setEditRowId(null)
 			setEditQuantity(null)
 			onRefresh()
-		} catch (e) {
+		} catch {
 			toast.error("Gagal update quantity")
 		} finally {
 			setIsSaving(false)
@@ -134,7 +131,7 @@ export function InventoryDataTable({
 			toast.success("Item berhasil dihapus!")
 			setDeleteRowId(null)
 			onRefresh()
-		} catch (e) {
+		} catch {
 			toast.error("Gagal menghapus item")
 		} finally {
 			setIsDeleting(false)

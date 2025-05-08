@@ -24,24 +24,27 @@ interface InventoryItem {
 }
 
 // Function to map backend data to frontend format
-const mapApiDataToInventoryItem = (apiData: any): InventoryItem => {
+const mapApiDataToInventoryItem = (apiData: unknown): InventoryItem => {
+	if (typeof apiData !== "object" || apiData === null) {
+		throw new Error("Invalid API data")
+	}
+	const item = apiData as Record<string, unknown>
 	// Determine status based on quantity
 	let status: "In Stock" | "Low Stock" | "Out of Stock" = "In Stock"
-	if (apiData.quantity === 0) {
+	if ((item.quantity as number) === 0) {
 		status = "Out of Stock"
-	} else if (apiData.quantity < 10) {
-		// You can adjust this threshold
+	} else if ((item.quantity as number) < 10) {
 		status = "Low Stock"
 	}
 
 	return {
-		id: apiData._id,
-		name: apiData.productName,
-		category: apiData.supplier || "General", // Using supplier as category
-		quantity: apiData.quantity,
-		price: 0, // This field doesn't exist in your API, set a default
+		id: item._id as number,
+		name: item.productName as string,
+		category: (item.supplier as string) || "General",
+		quantity: item.quantity as number,
+		price: 0,
 		status: status,
-		lastUpdated: new Date(apiData.lastUpdated).toLocaleDateString(),
+		lastUpdated: new Date(item.lastUpdated as string).toLocaleDateString(),
 	}
 }
 
@@ -87,8 +90,6 @@ export default function InventoryPage() {
 				setIsLoggedIn(true)
 			}
 
-			
-
 			// Actual API call
 			const response = await fetch(`${API_URL}/inventory`, { headers })
 
@@ -105,9 +106,11 @@ export default function InventoryPage() {
 			} else {
 				throw new Error("Invalid data format received from API")
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error fetching inventory:", err)
-			setError(err.message || "Failed to fetch inventory")
+			const errorMsg =
+				err instanceof Error ? err.message : "Failed to fetch inventory"
+			setError(errorMsg)
 		} finally {
 			setLoading(false)
 		}

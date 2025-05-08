@@ -14,13 +14,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import {
-	CalendarIcon,
-	ChevronDown,
-	Download,
-	Filter,
-	AlertTriangle,
-} from "lucide-react"
+import { CalendarIcon, Download, AlertTriangle } from "lucide-react"
 import { format, subDays, subMonths } from "date-fns"
 import { id } from "date-fns/locale"
 import {
@@ -28,18 +22,10 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-	DropdownMenuSeparator,
-	DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu"
+
 import {
 	Table,
 	TableBody,
-	TableCaption,
 	TableCell,
 	TableHead,
 	TableHeader,
@@ -230,7 +216,6 @@ function CheckoutReportDetail({
 export default function ReportPage() {
 	const [date, setDate] = useState<Date | undefined>(undefined)
 	const [period, setPeriod] = useState("all")
-	const [reports, setReports] = useState<CheckoutReport[]>([])
 	const [filteredReports, setFilteredReports] = useState<CheckoutReport[]>([])
 	const [selectedReport, setSelectedReport] = useState<CheckoutReport | null>(
 		null
@@ -274,7 +259,6 @@ export default function ReportPage() {
 				setError("Otentikasi diperlukan untuk melihat riwayat checkout")
 				setLoading(false)
 				// Use dummy data for development
-				setReports(checkoutReports)
 				setFilteredReports(checkoutReports)
 				return
 			}
@@ -301,21 +285,20 @@ export default function ReportPage() {
 			const result = await response.json()
 
 			if (result.success && Array.isArray(result.data)) {
-				setReports(result.data)
 				setFilteredReports(result.data)
 			} else {
 				// Use dummy data as fallback
 				console.log("Using dummy data as fallback")
-				setReports(checkoutReports)
 				setFilteredReports(checkoutReports)
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error fetching checkout history:", err)
-			setError(`Gagal mengambil data: ${err.message}`)
+			const errorMsg =
+				err instanceof Error ? err.message : "Gagal mengambil data"
+			setError(`Gagal mengambil data: ${errorMsg}`)
 
 			// Use dummy data when API fails
 			console.log("Using dummy data due to error")
-			setReports(checkoutReports)
 			setFilteredReports(checkoutReports)
 		} finally {
 			setLoading(false)
@@ -325,14 +308,15 @@ export default function ReportPage() {
 	// Initial fetch
 	useEffect(() => {
 		fetchCheckoutHistory()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	// Filter reports based on selected date and period
 	useEffect(() => {
 		if (date || period !== "all") {
-			// When date or period changes, fetch new data from API
 			fetchCheckoutHistory()
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [date, period])
 
 	const handleViewDetail = (report: CheckoutReport) => {

@@ -23,13 +23,7 @@ import {
 	TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select"
+
 import {
 	IconSearch,
 	IconPlus,
@@ -55,11 +49,13 @@ interface InventoryItem {
 	minLevel?: number
 }
 
+type CartItem = InventoryItem & { quantity: number }
+
 export default function CheckoutPage() {
 	const [searchQuery, setSearchQuery] = useState("")
 	const [selectedCategory, setSelectedCategory] = useState("All")
 	const [searchResults, setSearchResults] = useState<InventoryItem[]>([])
-	const [cartItems, setCartItems] = useState<any[]>([])
+	const [cartItems, setCartItems] = useState<CartItem[]>([])
 	const [workOrderNumber, setWorkOrderNumber] = useState("")
 	const [quantities, setQuantities] = useState<Record<string, number>>({})
 	const [isSubmitting, setIsSubmitting] = useState(false)
@@ -98,12 +94,16 @@ export default function CheckoutPage() {
 
 			if (data.success && Array.isArray(data.data)) {
 				// Process and set inventory items
-				const items = data.data.map((item: any) => ({
-					...item,
-					unit: determineUnit(item.productName), // Add default unit based on product name
-					minLevel: Math.round(item.quantity * 0.1), // Set default minLevel to 10% of current quantity
-				}))
-
+				const items: InventoryItem[] = data.data.map((item: unknown) => {
+					if (typeof item !== "object" || item === null)
+						throw new Error("Invalid item")
+					const i = item as Record<string, unknown>
+					return {
+						...i,
+						unit: determineUnit((i.productName as string) || ""),
+						minLevel: Math.round((i.quantity as number) * 0.1),
+					} as InventoryItem
+				})
 				setInventoryItems(items)
 				setSearchResults(items)
 
@@ -115,9 +115,11 @@ export default function CheckoutPage() {
 				) as string[]
 				setCategories(uniqueTypes)
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Error fetching inventory:", err)
-			setError(`Gagal mengambil data: ${err.message}`)
+			const errorMsg =
+				err instanceof Error ? err.message : "Gagal mengambil data"
+			setError(`Gagal mengambil data: ${errorMsg}`)
 		} finally {
 			setIsLoading(false)
 		}
@@ -153,6 +155,7 @@ export default function CheckoutPage() {
 	// Initial fetch
 	useEffect(() => {
 		fetchInventory()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	// Filter materials based on search query and category
@@ -257,11 +260,25 @@ export default function CheckoutPage() {
 				body: JSON.stringify(checkoutData),
 			})
 
-			const data = await response.json()
+			// Handle rate limiting
+			if (response.status === 429) {
+				throw new Error(
+					"Terlalu banyak permintaan. Silakan coba lagi dalam beberapa saat."
+				)
+			}
+
+			// Try to parse response as JSON
+			let data
+			try {
+				data = await response.json()
+			} catch {
+				throw new Error(
+					`Error server: ${response.status}. Server tidak mengembalikan JSON yang valid.`
+				)
+			}
 
 			if (!response.ok) {
-				toast.error(data.message || "Checkout gagal")
-				throw new Error(data.message || "Checkout gagal")
+				throw new Error(data.message || `Error server: ${response.status}`)
 			}
 
 			if (data.success) {
@@ -277,13 +294,14 @@ export default function CheckoutPage() {
 				// Refresh inventory data to get updated quantities
 				fetchInventory()
 			} else {
-				toast.error(data.message || "Checkout gagal")
 				throw new Error(data.message || "Checkout gagal")
 			}
-		} catch (err: any) {
-			console.error("Error during checkout:", err)
-			setError(err.message || "Checkout gagal")
-			toast.error(err.message || "Checkout gagal", {
+		} catch (error: unknown) {
+			console.error("Error during checkout:", error)
+			const errorMessage =
+				error instanceof Error ? error.message : "Checkout gagal"
+			setError(errorMessage)
+			toast.error(errorMessage, {
 				style: {
 					background: "red",
 				},

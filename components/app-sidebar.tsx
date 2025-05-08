@@ -5,18 +5,14 @@ import {
 	IconCamera,
 	IconChartBar,
 	IconDashboard,
-	IconDatabase,
 	IconFileAi,
+	IconFileText,
 	IconFileDescription,
-	IconFileWord,
-	IconFolder,
 	IconHelp,
 	IconInnerShadowTop,
-	IconListDetails,
 	IconReport,
 	IconSearch,
 	IconSettings,
-	IconUsers,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -47,7 +43,7 @@ const data = {
 		{
 			title: "Laporan",
 			url: "/report",
-			icon: IconReport,
+			icon: IconFileText,
 		},
 		{
 			title: "Checkout",
