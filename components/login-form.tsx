@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { IconEye, IconEyeOff } from "@tabler/icons-react"
 
 // API endpoint
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
 export function LoginForm() {
 	const [email, setEmail] = useState("")

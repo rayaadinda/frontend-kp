@@ -40,9 +40,10 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { ReportSkeleton } from "@/components/report-skeleton"
 
 // API endpoint
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
 // Tipe data untuk item checkout
 interface CheckoutItem {
@@ -343,238 +344,250 @@ export default function ReportPage() {
 					<div className="@container/main flex flex-1 flex-col gap-2">
 						<div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
 							<div className="px-4 lg:px-6">
-								<div className="flex justify-between items-center mb-4">
-									<div>
-										<h1 className="text-2xl font-bold tracking-tight">
-											Laporan
-										</h1>
-										<p className="text-muted-foreground">
-											Lihat dan analisa laporan pengambilan material
-										</p>
-									</div>
-									<Button variant="outline" onClick={handleExportCSV}>
-										<Download className="mr-2 h-4 w-4" />
-										Ekspor CSV
-									</Button>
-								</div>
+								{loading ? (
+									<ReportSkeleton />
+								) : (
+									<>
+										<div className="flex justify-between items-center mb-4">
+											<div>
+												<h1 className="text-2xl font-bold tracking-tight">
+													Laporan
+												</h1>
+												<p className="text-muted-foreground">
+													Lihat dan analisa laporan pengambilan material
+												</p>
+											</div>
+											<Button variant="outline" onClick={handleExportCSV}>
+												<Download className="mr-2 h-4 w-4" />
+												Ekspor CSV
+											</Button>
+										</div>
 
-								<Tabs defaultValue="checkout" className="w-full mt-6">
-									<TabsList className="grid w-full grid-cols-2 mb-6">
-										<TabsTrigger value="checkout">Laporan Checkout</TabsTrigger>
-										<TabsTrigger value="inventory">
-											Laporan Inventaris
-										</TabsTrigger>
-									</TabsList>
+										<Tabs defaultValue="checkout" className="w-full mt-6">
+											<TabsList className="grid w-full grid-cols-2 mb-6">
+												<TabsTrigger value="checkout">
+													Laporan Checkout
+												</TabsTrigger>
+												<TabsTrigger value="inventory">
+													Laporan Inventaris
+												</TabsTrigger>
+											</TabsList>
 
-									<TabsContent value="checkout">
-										<div className="flex flex-col space-y-4">
-											<Card>
-												<CardHeader className="pb-3">
-													<CardTitle>Filter Laporan</CardTitle>
-													<CardDescription>
-														Pilih periode waktu atau tanggal spesifik
-													</CardDescription>
-												</CardHeader>
-												<CardContent>
-													<div className="flex flex-wrap gap-4">
-														<div className="flex items-center space-x-4">
-															<Popover>
-																<PopoverTrigger asChild>
-																	<Button
-																		variant="outline"
-																		className={cn(
-																			"w-[240px] justify-start text-left font-normal",
-																			!date && "text-muted-foreground"
-																		)}
-																	>
-																		<CalendarIcon className="mr-2 h-4 w-4" />
-																		{date ? (
-																			format(date, "PPP", { locale: id })
-																		) : (
-																			<span>Pilih tanggal</span>
-																		)}
-																	</Button>
-																</PopoverTrigger>
-																<PopoverContent
-																	className="w-auto p-0"
-																	align="start"
-																>
-																	<CalendarComponent
-																		mode="single"
-																		selected={date}
-																		onSelect={(newDate) => {
-																			setDate(newDate)
-																			setPeriod("all")
+											<TabsContent value="checkout">
+												<div className="flex flex-col space-y-4">
+													<Card>
+														<CardHeader className="pb-3">
+															<CardTitle>Filter Laporan</CardTitle>
+															<CardDescription>
+																Pilih periode waktu atau tanggal spesifik
+															</CardDescription>
+														</CardHeader>
+														<CardContent>
+															<div className="flex flex-wrap gap-4">
+																<div className="flex items-center space-x-4">
+																	<Popover>
+																		<PopoverTrigger asChild>
+																			<Button
+																				variant="outline"
+																				className={cn(
+																					"w-[240px] justify-start text-left font-normal",
+																					!date && "text-muted-foreground"
+																				)}
+																			>
+																				<CalendarIcon className="mr-2 h-4 w-4" />
+																				{date ? (
+																					format(date, "PPP", { locale: id })
+																				) : (
+																					<span>Pilih tanggal</span>
+																				)}
+																			</Button>
+																		</PopoverTrigger>
+																		<PopoverContent
+																			className="w-auto p-0"
+																			align="start"
+																		>
+																			<CalendarComponent
+																				mode="single"
+																				selected={date}
+																				onSelect={(newDate) => {
+																					setDate(newDate)
+																					setPeriod("all")
+																				}}
+																				initialFocus
+																			/>
+																		</PopoverContent>
+																	</Popover>
+
+																	<Select
+																		value={period}
+																		onValueChange={(value) => {
+																			setPeriod(value)
+																			if (value !== "custom") setDate(undefined)
 																		}}
-																		initialFocus
-																	/>
-																</PopoverContent>
-															</Popover>
+																	>
+																		<SelectTrigger className="w-[180px]">
+																			<SelectValue placeholder="Pilih periode" />
+																		</SelectTrigger>
+																		<SelectContent>
+																			<SelectItem value="all">
+																				Semua waktu
+																			</SelectItem>
+																			<SelectItem value="week">
+																				7 hari terakhir
+																			</SelectItem>
+																			<SelectItem value="month">
+																				30 hari terakhir
+																			</SelectItem>
+																			<SelectItem value="quarter">
+																				3 bulan terakhir
+																			</SelectItem>
+																		</SelectContent>
+																	</Select>
 
-															<Select
-																value={period}
-																onValueChange={(value) => {
-																	setPeriod(value)
-																	if (value !== "custom") setDate(undefined)
-																}}
-															>
-																<SelectTrigger className="w-[180px]">
-																	<SelectValue placeholder="Pilih periode" />
-																</SelectTrigger>
-																<SelectContent>
-																	<SelectItem value="all">
-																		Semua waktu
-																	</SelectItem>
-																	<SelectItem value="week">
-																		7 hari terakhir
-																	</SelectItem>
-																	<SelectItem value="month">
-																		30 hari terakhir
-																	</SelectItem>
-																	<SelectItem value="quarter">
-																		3 bulan terakhir
-																	</SelectItem>
-																</SelectContent>
-															</Select>
+																	{date && (
+																		<Button
+																			variant="ghost"
+																			size="sm"
+																			onClick={() => setDate(undefined)}
+																		>
+																			Reset
+																		</Button>
+																	)}
+																</div>
+															</div>
+														</CardContent>
+													</Card>
 
-															{date && (
-																<Button
-																	variant="ghost"
-																	size="sm"
-																	onClick={() => setDate(undefined)}
-																>
-																	Reset
-																</Button>
-															)}
-														</div>
-													</div>
-												</CardContent>
-											</Card>
+													{error && (
+														<Card className="border-red-200 bg-red-50">
+															<CardContent className="pt-6">
+																<div className="flex items-center gap-2 text-red-600">
+																	<AlertTriangle className="h-4 w-4" />
+																	<p>{error}</p>
+																</div>
+															</CardContent>
+														</Card>
+													)}
 
-											{error && (
-												<Card className="border-red-200 bg-red-50">
-													<CardContent className="pt-6">
-														<div className="flex items-center gap-2 text-red-600">
-															<AlertTriangle className="h-4 w-4" />
-															<p>{error}</p>
-														</div>
-													</CardContent>
-												</Card>
-											)}
+													{selectedReport ? (
+														<CheckoutReportDetail
+															report={selectedReport}
+															onClose={() => setSelectedReport(null)}
+														/>
+													) : (
+														<Card>
+															<CardHeader className="pb-3">
+																<CardTitle>Laporan Checkout Material</CardTitle>
+																<CardDescription>
+																	{loading
+																		? "Memuat data..."
+																		: `${filteredReports.length} laporan ditemukan`}
+																</CardDescription>
+															</CardHeader>
+															<CardContent>
+																{loading ? (
+																	<div className="py-8 text-center">
+																		<p>Memuat riwayat checkout...</p>
+																	</div>
+																) : (
+																	<Table>
+																		<TableHeader>
+																			<TableRow>
+																				<TableHead>No. Work Order</TableHead>
+																				<TableHead>Tanggal</TableHead>
+																				<TableHead>Project</TableHead>
+																				<TableHead>Total Item</TableHead>
+																				<TableHead>Operator</TableHead>
+																				<TableHead>Status</TableHead>
+																				<TableHead className="text-right">
+																					Aksi
+																				</TableHead>
+																			</TableRow>
+																		</TableHeader>
+																		<TableBody>
+																			{filteredReports.length > 0 ? (
+																				filteredReports.map((report) => (
+																					<TableRow key={report.id}>
+																						<TableCell className="font-medium">
+																							{report.workOrder}
+																						</TableCell>
+																						<TableCell>
+																							{format(
+																								new Date(report.date),
+																								"dd MMM yyyy",
+																								{ locale: id }
+																							)}
+																						</TableCell>
+																						<TableCell>
+																							{report.project}
+																						</TableCell>
+																						<TableCell>
+																							{report.totalItems}
+																						</TableCell>
+																						<TableCell>
+																							{report.operator}
+																						</TableCell>
+																						<TableCell>
+																							<Badge
+																								variant={
+																									report.status === "Selesai"
+																										? "success"
+																										: "default"
+																								}
+																							>
+																								{report.status}
+																							</Badge>
+																						</TableCell>
+																						<TableCell className="text-right">
+																							<Button
+																								variant="ghost"
+																								size="sm"
+																								onClick={() =>
+																									handleViewDetail(report)
+																								}
+																							>
+																								Lihat Detail
+																							</Button>
+																						</TableCell>
+																					</TableRow>
+																				))
+																			) : (
+																				<TableRow>
+																					<TableCell
+																						colSpan={7}
+																						className="text-center py-6 text-muted-foreground"
+																					>
+																						Tidak ada laporan yang ditemukan
+																					</TableCell>
+																				</TableRow>
+																			)}
+																		</TableBody>
+																	</Table>
+																)}
+															</CardContent>
+														</Card>
+													)}
+												</div>
+											</TabsContent>
 
-											{selectedReport ? (
-												<CheckoutReportDetail
-													report={selectedReport}
-													onClose={() => setSelectedReport(null)}
-												/>
-											) : (
+											<TabsContent value="inventory">
 												<Card>
-													<CardHeader className="pb-3">
-														<CardTitle>Laporan Checkout Material</CardTitle>
+													<CardHeader>
+														<CardTitle>Laporan Inventaris</CardTitle>
 														<CardDescription>
-															{loading
-																? "Memuat data..."
-																: `${filteredReports.length} laporan ditemukan`}
+															Fitur ini akan segera tersedia
 														</CardDescription>
 													</CardHeader>
-													<CardContent>
-														{loading ? (
-															<div className="py-8 text-center">
-																<p>Memuat riwayat checkout...</p>
-															</div>
-														) : (
-															<Table>
-																<TableHeader>
-																	<TableRow>
-																		<TableHead>No. Work Order</TableHead>
-																		<TableHead>Tanggal</TableHead>
-																		<TableHead>Project</TableHead>
-																		<TableHead>Total Item</TableHead>
-																		<TableHead>Operator</TableHead>
-																		<TableHead>Status</TableHead>
-																		<TableHead className="text-right">
-																			Aksi
-																		</TableHead>
-																	</TableRow>
-																</TableHeader>
-																<TableBody>
-																	{filteredReports.length > 0 ? (
-																		filteredReports.map((report) => (
-																			<TableRow key={report.id}>
-																				<TableCell className="font-medium">
-																					{report.workOrder}
-																				</TableCell>
-																				<TableCell>
-																					{format(
-																						new Date(report.date),
-																						"dd MMM yyyy",
-																						{ locale: id }
-																					)}
-																				</TableCell>
-																				<TableCell>{report.project}</TableCell>
-																				<TableCell>
-																					{report.totalItems}
-																				</TableCell>
-																				<TableCell>{report.operator}</TableCell>
-																				<TableCell>
-																					<Badge
-																						variant={
-																							report.status === "Selesai"
-																								? "success"
-																								: "default"
-																						}
-																					>
-																						{report.status}
-																					</Badge>
-																				</TableCell>
-																				<TableCell className="text-right">
-																					<Button
-																						variant="ghost"
-																						size="sm"
-																						onClick={() =>
-																							handleViewDetail(report)
-																						}
-																					>
-																						Lihat Detail
-																					</Button>
-																				</TableCell>
-																			</TableRow>
-																		))
-																	) : (
-																		<TableRow>
-																			<TableCell
-																				colSpan={7}
-																				className="text-center py-6 text-muted-foreground"
-																			>
-																				Tidak ada laporan yang ditemukan
-																			</TableCell>
-																		</TableRow>
-																	)}
-																</TableBody>
-															</Table>
-														)}
+													<CardContent className="h-[400px] flex items-center justify-center">
+														<p className="text-muted-foreground">
+															Sedang dalam pengembangan
+														</p>
 													</CardContent>
 												</Card>
-											)}
-										</div>
-									</TabsContent>
-
-									<TabsContent value="inventory">
-										<Card>
-											<CardHeader>
-												<CardTitle>Laporan Inventaris</CardTitle>
-												<CardDescription>
-													Fitur ini akan segera tersedia
-												</CardDescription>
-											</CardHeader>
-											<CardContent className="h-[400px] flex items-center justify-center">
-												<p className="text-muted-foreground">
-													Sedang dalam pengembangan
-												</p>
-											</CardContent>
-										</Card>
-									</TabsContent>
-								</Tabs>
+											</TabsContent>
+										</Tabs>
+									</>
+								)}
 							</div>
 						</div>
 					</div>

@@ -4,11 +4,12 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { InventoryDataTable } from "@/components/inventory-data-table"
+import { InventoryDataTableSkeleton } from "@/components/inventory-data-table-skeleton"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 
 // API endpoint
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
 // For development - set to false in production
 const BYPASS_AUTH_FOR_DEV = true
@@ -143,9 +144,7 @@ export default function InventoryPage() {
 							</div>
 							<div className="px-4 lg:px-6">
 								{loading ? (
-									<div className="flex justify-center py-8">
-										Loading inventory data...
-									</div>
+									<InventoryDataTableSkeleton />
 								) : error ? (
 									<div className="bg-red-50 p-4 rounded-md border border-red-200">
 										<h3 className="text-red-600 font-medium mb-2">Error</h3>

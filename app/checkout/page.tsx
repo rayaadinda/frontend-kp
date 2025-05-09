@@ -33,9 +33,10 @@ import {
 	IconLoader2,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
+import { CheckoutSkeleton } from "@/components/checkout-skeleton"
 
 // API endpoint
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
 // Define inventory item interface
 interface InventoryItem {
@@ -336,288 +337,301 @@ export default function CheckoutPage() {
 							</div>
 
 							<div className="px-4 lg:px-6">
-								{/* Work Order Input */}
-								<div className="mb-6">
-									<Card>
-										<CardHeader>
-											<CardTitle>Informasi Work Order</CardTitle>
-											<CardDescription>
-												Masukkan detail work order Anda
-											</CardDescription>
-										</CardHeader>
-										<CardContent>
-											<div className="grid gap-4 sm:grid-cols-2">
-												<div className="space-y-2">
-													<label
-														htmlFor="work-order"
-														className="text-sm font-medium"
-													>
-														Nomor Work Order
-													</label>
-													<Input
-														id="work-order"
-														placeholder="Masukkan nomor work order"
-														value={workOrderNumber}
-														onChange={(e) => setWorkOrderNumber(e.target.value)}
-													/>
+								{isLoading ? (
+									<CheckoutSkeleton />
+								) : (
+									<>
+										{/* Work Order Input */}
+										<div className="mb-6">
+											<Card>
+												<CardHeader>
+													<CardTitle>Informasi Work Order</CardTitle>
+													<CardDescription>
+														Masukkan detail work order Anda
+													</CardDescription>
+												</CardHeader>
+												<CardContent>
+													<div className="grid gap-4 sm:grid-cols-2">
+														<div className="space-y-2">
+															<label
+																htmlFor="work-order"
+																className="text-sm font-medium"
+															>
+																Nomor Work Order
+															</label>
+															<Input
+																id="work-order"
+																placeholder="Masukkan nomor work order"
+																value={workOrderNumber}
+																onChange={(e) =>
+																	setWorkOrderNumber(e.target.value)
+																}
+															/>
+														</div>
+													</div>
+												</CardContent>
+											</Card>
+										</div>
+
+										{error && (
+											<div className="mb-6 border border-red-500 bg-red-50 p-4 rounded-md">
+												<div className="flex items-center gap-2 text-red-500">
+													<IconAlertCircle className="h-4 w-4" />
+													<p className="font-semibold">Error</p>
 												</div>
+												<p className="text-red-500 mt-1">{error}</p>
 											</div>
-										</CardContent>
-									</Card>
-								</div>
-
-								{error && (
-									<div className="mb-6 border border-red-500 bg-red-50 p-4 rounded-md">
-										<div className="flex items-center gap-2 text-red-500">
-											<IconAlertCircle className="h-4 w-4" />
-											<p className="font-semibold">Error</p>
-										</div>
-										<p className="text-red-500 mt-1">{error}</p>
-									</div>
-								)}
-								{success && (
-									<div className="mb-6 border border-green-500 bg-green-50 p-4 rounded-md">
-										<div className="flex items-center gap-2 text-green-500">
-											<IconCircleCheck className="h-4 w-4" />
-											<p className="font-semibold">Berhasil</p>
-										</div>
-										<p className="text-green-500 mt-1">{success}</p>
-									</div>
-								)}
-
-								<div className="space-y-6">
-									{/* Main Search and Results */}
-									<Card>
-										<CardHeader>
-											<CardTitle>Pencarian Material</CardTitle>
-											<CardDescription>
-												Cari material berdasarkan kode atau deskripsi
-											</CardDescription>
-										</CardHeader>
-										<CardContent className="space-y-4">
-											{/* Search Bar */}
-											<div className="relative">
-												<IconSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-												<Input
-													type="search"
-													placeholder="Cari berdasarkan kode atau deskripsi..."
-													className="pl-9"
-													value={searchQuery}
-													onChange={(e) => setSearchQuery(e.target.value)}
-												/>
+										)}
+										{success && (
+											<div className="mb-6 border border-green-500 bg-green-50 p-4 rounded-md">
+												<div className="flex items-center gap-2 text-green-500">
+													<IconCircleCheck className="h-4 w-4" />
+													<p className="font-semibold">Berhasil</p>
+												</div>
+												<p className="text-green-500 mt-1">{success}</p>
 											</div>
+										)}
 
-											{/* Category Filters */}
-											<div className="flex items-center gap-2 overflow-auto pb-2">
-												<span className="text-sm font-medium">Filter:</span>
-												<Button
-													variant={
-														selectedCategory === "All" ? "default" : "outline"
-													}
-													size="sm"
-													onClick={() => setSelectedCategory("All")}
-												>
-													Semua
-												</Button>
-												{categories.map((category) => (
+										<div className="space-y-6">
+											{/* Main Search and Results */}
+											<Card>
+												<CardHeader>
+													<CardTitle>Pencarian Material</CardTitle>
+													<CardDescription>
+														Cari material berdasarkan kode atau deskripsi
+													</CardDescription>
+												</CardHeader>
+												<CardContent className="space-y-4">
+													{/* Search Bar */}
+													<div className="relative">
+														<IconSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+														<Input
+															type="search"
+															placeholder="Cari berdasarkan kode atau deskripsi..."
+															className="pl-9"
+															value={searchQuery}
+															onChange={(e) => setSearchQuery(e.target.value)}
+														/>
+													</div>
+
+													{/* Category Filters */}
+													<div className="flex items-center gap-2 overflow-auto pb-2">
+														<span className="text-sm font-medium">Filter:</span>
+														<Button
+															variant={
+																selectedCategory === "All"
+																	? "default"
+																	: "outline"
+															}
+															size="sm"
+															onClick={() => setSelectedCategory("All")}
+														>
+															Semua
+														</Button>
+														{categories.map((category) => (
+															<Button
+																key={category}
+																variant={
+																	selectedCategory === category
+																		? "default"
+																		: "outline"
+																}
+																size="sm"
+																onClick={() => setSelectedCategory(category)}
+															>
+																{category}
+															</Button>
+														))}
+													</div>
+
+													{/* Results Table */}
+													<div className="rounded-md border overflow-auto">
+														<Table>
+															<TableHeader>
+																<TableRow>
+																	<TableHead>Kode Item</TableHead>
+																	<TableHead>Deskripsi</TableHead>
+																	<TableHead className="text-right">
+																		Tersedia
+																	</TableHead>
+																	<TableHead className="w-[140px]">
+																		Jumlah
+																	</TableHead>
+																	<TableHead className="w-[80px]"></TableHead>
+																</TableRow>
+															</TableHeader>
+															<TableBody>
+																{isLoading ? (
+																	<TableRow>
+																		<TableCell
+																			colSpan={5}
+																			className="h-24 text-center"
+																		>
+																			<div className="flex justify-center items-center">
+																				<IconLoader2 className="h-5 w-5 animate-spin mr-2" />
+																				Memuat data...
+																			</div>
+																		</TableCell>
+																	</TableRow>
+																) : searchResults.length > 0 ? (
+																	searchResults.map((item) => (
+																		<TableRow key={item._id}>
+																			<TableCell className="font-medium">
+																				{item.productCode}
+																			</TableCell>
+																			<TableCell>{item.productName}</TableCell>
+																			<TableCell className="text-right">
+																				<span
+																					className={`${
+																						item.quantity <=
+																						(item.minLevel || 0)
+																							? "text-red-500"
+																							: ""
+																					}`}
+																				>
+																					{item.quantity} {item.unit || "Pcs"}
+																				</span>
+																			</TableCell>
+																			<TableCell>
+																				<Input
+																					type="number"
+																					min="0"
+																					max={item.quantity}
+																					value={quantities[item._id] || ""}
+																					onChange={(e) =>
+																						handleQuantityChange(
+																							item._id,
+																							parseInt(e.target.value) || 0
+																						)
+																					}
+																				/>
+																			</TableCell>
+																			<TableCell>
+																				<Button
+																					variant="ghost"
+																					size="sm"
+																					onClick={() => addToCart(item)}
+																					disabled={
+																						!quantities[item._id] ||
+																						quantities[item._id] <= 0 ||
+																						quantities[item._id] > item.quantity
+																					}
+																				>
+																					<IconPlus className="h-4 w-4" />
+																				</Button>
+																			</TableCell>
+																		</TableRow>
+																	))
+																) : (
+																	<TableRow>
+																		<TableCell
+																			colSpan={5}
+																			className="h-24 text-center"
+																		>
+																			Tidak ada hasil ditemukan.
+																		</TableCell>
+																	</TableRow>
+																)}
+															</TableBody>
+														</Table>
+													</div>
+												</CardContent>
+											</Card>
+
+											{/* Shopping Cart */}
+											<Card>
+												<CardHeader className="flex flex-row items-center justify-between">
+													<div>
+														<CardTitle>Keranjang Material</CardTitle>
+														<CardDescription>
+															Item siap untuk checkout
+														</CardDescription>
+													</div>
+													<Badge variant="outline">{totalItems} item</Badge>
+												</CardHeader>
+												<CardContent className="overflow-auto">
+													<div className="rounded-md border">
+														<Table>
+															<TableHeader>
+																<TableRow>
+																	<TableHead>Kode Item</TableHead>
+																	<TableHead>Deskripsi</TableHead>
+																	<TableHead className="text-right">
+																		Jumlah
+																	</TableHead>
+																	<TableHead className="w-[60px]"></TableHead>
+																</TableRow>
+															</TableHeader>
+															<TableBody>
+																{cartItems.length > 0 ? (
+																	cartItems.map((item) => (
+																		<TableRow key={`cart-${item._id}`}>
+																			<TableCell className="font-medium">
+																				{item.productCode}
+																			</TableCell>
+																			<TableCell>{item.productName}</TableCell>
+																			<TableCell className="text-right">
+																				{item.quantity} {item.unit || "Pcs"}
+																			</TableCell>
+																			<TableCell>
+																				<Button
+																					variant="ghost"
+																					size="sm"
+																					onClick={() =>
+																						removeFromCart(item._id)
+																					}
+																				>
+																					<IconTrash className="h-4 w-4 text-red-500" />
+																				</Button>
+																			</TableCell>
+																		</TableRow>
+																	))
+																) : (
+																	<TableRow>
+																		<TableCell
+																			colSpan={4}
+																			className="h-24 text-center"
+																		>
+																			Tidak ada item dalam keranjang.
+																		</TableCell>
+																	</TableRow>
+																)}
+															</TableBody>
+														</Table>
+													</div>
+												</CardContent>
+												<CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-2">
 													<Button
-														key={category}
-														variant={
-															selectedCategory === category
-																? "default"
-																: "outline"
-														}
-														size="sm"
-														onClick={() => setSelectedCategory(category)}
+														variant="outline"
+														disabled={cartItems.length === 0}
+														onClick={() => setCartItems([])}
+														className="w-full sm:w-auto"
 													>
-														{category}
+														Hapus Semua
 													</Button>
-												))}
-											</div>
-
-											{/* Results Table */}
-											<div className="rounded-md border overflow-auto">
-												<Table>
-													<TableHeader>
-														<TableRow>
-															<TableHead>Kode Item</TableHead>
-															<TableHead>Deskripsi</TableHead>
-															<TableHead className="text-right">
-																Tersedia
-															</TableHead>
-															<TableHead className="w-[140px]">
-																Jumlah
-															</TableHead>
-															<TableHead className="w-[80px]"></TableHead>
-														</TableRow>
-													</TableHeader>
-													<TableBody>
-														{isLoading ? (
-															<TableRow>
-																<TableCell
-																	colSpan={5}
-																	className="h-24 text-center"
-																>
-																	<div className="flex justify-center items-center">
-																		<IconLoader2 className="h-5 w-5 animate-spin mr-2" />
-																		Memuat data...
-																	</div>
-																</TableCell>
-															</TableRow>
-														) : searchResults.length > 0 ? (
-															searchResults.map((item) => (
-																<TableRow key={item._id}>
-																	<TableCell className="font-medium">
-																		{item.productCode}
-																	</TableCell>
-																	<TableCell>{item.productName}</TableCell>
-																	<TableCell className="text-right">
-																		<span
-																			className={`${
-																				item.quantity <= (item.minLevel || 0)
-																					? "text-red-500"
-																					: ""
-																			}`}
-																		>
-																			{item.quantity} {item.unit || "Pcs"}
-																		</span>
-																	</TableCell>
-																	<TableCell>
-																		<Input
-																			type="number"
-																			min="0"
-																			max={item.quantity}
-																			value={quantities[item._id] || ""}
-																			onChange={(e) =>
-																				handleQuantityChange(
-																					item._id,
-																					parseInt(e.target.value) || 0
-																				)
-																			}
-																		/>
-																	</TableCell>
-																	<TableCell>
-																		<Button
-																			variant="ghost"
-																			size="sm"
-																			onClick={() => addToCart(item)}
-																			disabled={
-																				!quantities[item._id] ||
-																				quantities[item._id] <= 0 ||
-																				quantities[item._id] > item.quantity
-																			}
-																		>
-																			<IconPlus className="h-4 w-4" />
-																		</Button>
-																	</TableCell>
-																</TableRow>
-															))
+													<Button
+														disabled={
+															cartItems.length === 0 ||
+															!workOrderNumber ||
+															isSubmitting
+														}
+														onClick={handleCheckout}
+														className="w-full sm:w-auto"
+													>
+														{isSubmitting ? (
+															<>
+																<IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+																Memproses...
+															</>
 														) : (
-															<TableRow>
-																<TableCell
-																	colSpan={5}
-																	className="h-24 text-center"
-																>
-																	Tidak ada hasil ditemukan.
-																</TableCell>
-															</TableRow>
+															"Checkout Material"
 														)}
-													</TableBody>
-												</Table>
-											</div>
-										</CardContent>
-									</Card>
-
-									{/* Shopping Cart */}
-									<Card>
-										<CardHeader className="flex flex-row items-center justify-between">
-											<div>
-												<CardTitle>Keranjang Material</CardTitle>
-												<CardDescription>
-													Item siap untuk checkout
-												</CardDescription>
-											</div>
-											<Badge variant="outline">{totalItems} item</Badge>
-										</CardHeader>
-										<CardContent className="overflow-auto">
-											<div className="rounded-md border">
-												<Table>
-													<TableHeader>
-														<TableRow>
-															<TableHead>Kode Item</TableHead>
-															<TableHead>Deskripsi</TableHead>
-															<TableHead className="text-right">
-																Jumlah
-															</TableHead>
-															<TableHead className="w-[60px]"></TableHead>
-														</TableRow>
-													</TableHeader>
-													<TableBody>
-														{cartItems.length > 0 ? (
-															cartItems.map((item) => (
-																<TableRow key={`cart-${item._id}`}>
-																	<TableCell className="font-medium">
-																		{item.productCode}
-																	</TableCell>
-																	<TableCell>{item.productName}</TableCell>
-																	<TableCell className="text-right">
-																		{item.quantity} {item.unit || "Pcs"}
-																	</TableCell>
-																	<TableCell>
-																		<Button
-																			variant="ghost"
-																			size="sm"
-																			onClick={() => removeFromCart(item._id)}
-																		>
-																			<IconTrash className="h-4 w-4 text-red-500" />
-																		</Button>
-																	</TableCell>
-																</TableRow>
-															))
-														) : (
-															<TableRow>
-																<TableCell
-																	colSpan={4}
-																	className="h-24 text-center"
-																>
-																	Tidak ada item dalam keranjang.
-																</TableCell>
-															</TableRow>
-														)}
-													</TableBody>
-												</Table>
-											</div>
-										</CardContent>
-										<CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-2">
-											<Button
-												variant="outline"
-												disabled={cartItems.length === 0}
-												onClick={() => setCartItems([])}
-												className="w-full sm:w-auto"
-											>
-												Hapus Semua
-											</Button>
-											<Button
-												disabled={
-													cartItems.length === 0 ||
-													!workOrderNumber ||
-													isSubmitting
-												}
-												onClick={handleCheckout}
-												className="w-full sm:w-auto"
-											>
-												{isSubmitting ? (
-													<>
-														<IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
-														Memproses...
-													</>
-												) : (
-													"Checkout Material"
-												)}
-											</Button>
-										</CardFooter>
-									</Card>
-								</div>
+													</Button>
+												</CardFooter>
+											</Card>
+										</div>
+									</>
+								)}
 							</div>
 						</div>
 					</div>
