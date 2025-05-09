@@ -5,6 +5,7 @@ import "./globals.css"
 import { AuthCheck } from "@/components/auth-check"
 import { Toaster } from "@/components/ui/sonner"
 import PageTransition from "@/components/PageTransition"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
 						<PageTransition>{children}</PageTransition>
 					</ThemeProvider>
 				</AuthCheck>
+				<SpeedInsights />
 			</body>
 		</html>
 	)
