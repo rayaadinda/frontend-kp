@@ -34,6 +34,15 @@ import {
 } from "@tabler/icons-react"
 import { toast } from "sonner"
 import { CheckoutSkeleton } from "@/components/checkout-skeleton"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { id } from "date-fns/locale"
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover"
 
 // API endpoint
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
@@ -65,6 +74,7 @@ export default function CheckoutPage() {
 	const [success, setSuccess] = useState("")
 	const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
 	const [categories, setCategories] = useState<string[]>([])
+	const [checkoutDate, setCheckoutDate] = useState<Date | undefined>(new Date())
 
 	// Fetch inventory data from API
 	const fetchInventory = async () => {
@@ -233,26 +243,25 @@ export default function CheckoutPage() {
 		setSuccess("")
 
 		try {
-			// Get token from localStorage
 			const token = localStorage.getItem("token")
-
 			if (!token) {
 				setError("Otentikasi diperlukan")
 				toast.error("Otentikasi diperlukan")
 				setIsSubmitting(false)
 				return
 			}
-
-			// Format data for the API
 			const checkoutData = {
-				workOrderNumber,
+				workOrder: workOrderNumber,
 				items: cartItems.map((item) => ({
-					itemCode: item.productCode,
+					name: item.productName,
 					quantity: item.quantity,
+					unit: item.unit || "Pcs",
 				})),
+				checkoutDate: checkoutDate
+					? checkoutDate.toISOString()
+					: new Date().toISOString(),
 			}
-
-			const response = await fetch(`${API_URL}/api/inventory/checkout`, {
+			const response = await fetch(`${API_URL}/api/checkout`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -260,15 +269,11 @@ export default function CheckoutPage() {
 				},
 				body: JSON.stringify(checkoutData),
 			})
-
-			// Handle rate limiting
 			if (response.status === 429) {
 				throw new Error(
 					"Terlalu banyak permintaan. Silakan coba lagi dalam beberapa saat."
 				)
 			}
-
-			// Try to parse response as JSON
 			let data
 			try {
 				data = await response.json()
@@ -277,11 +282,9 @@ export default function CheckoutPage() {
 					`Error server: ${response.status}. Server tidak mengembalikan JSON yang valid.`
 				)
 			}
-
 			if (!response.ok) {
 				throw new Error(data.message || `Error server: ${response.status}`)
 			}
-
 			if (data.success) {
 				toast.success("Material berhasil di-checkout!", {
 					style: {
@@ -289,10 +292,9 @@ export default function CheckoutPage() {
 					},
 				})
 				setSuccess("Material berhasil di-checkout!")
-				// Clear cart
 				setCartItems([])
 				setWorkOrderNumber("")
-				// Refresh inventory data to get updated quantities
+				setCheckoutDate(new Date())
 				fetchInventory()
 			} else {
 				throw new Error(data.message || "Checkout gagal")
@@ -351,8 +353,8 @@ export default function CheckoutPage() {
 													</CardDescription>
 												</CardHeader>
 												<CardContent>
-													<div className="grid gap-4 sm:grid-cols-2">
-														<div className="space-y-2">
+													<div className="flex flex-col sm:flex-row gap-4">
+														<div className="flex-1 max-w-full sm:max-w-md space-y-2">
 															<label
 																htmlFor="work-order"
 																className="text-sm font-medium"
@@ -367,6 +369,37 @@ export default function CheckoutPage() {
 																	setWorkOrderNumber(e.target.value)
 																}
 															/>
+														</div>
+														<div className="w-full sm:w-auto space-y-2 flex flex-col">
+															<label className="text-sm font-medium mb-1">
+																Tanggal Checkout
+															</label>
+															<Popover>
+																<PopoverTrigger asChild>
+																	<Button
+																		variant="outline"
+																		className="w-full sm:w-[180px] justify-start text-left font-normal"
+																	>
+																		<CalendarIcon className="mr-2 h-4 w-4" />
+																		{checkoutDate
+																			? format(checkoutDate, "PPP", {
+																					locale: id,
+																			  })
+																			: "Pilih tanggal"}
+																	</Button>
+																</PopoverTrigger>
+																<PopoverContent
+																	className="w-auto p-0"
+																	align="start"
+																>
+																	<CalendarComponent
+																		mode="single"
+																		selected={checkoutDate}
+																		onSelect={setCheckoutDate}
+																		initialFocus
+																	/>
+																</PopoverContent>
+															</Popover>
 														</div>
 													</div>
 												</CardContent>

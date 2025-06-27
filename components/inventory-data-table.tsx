@@ -162,7 +162,6 @@ export function InventoryDataTable({
 							<TableHead>Name</TableHead>
 							<TableHead>Category</TableHead>
 							<TableHead>Quantity</TableHead>
-							<TableHead>Price</TableHead>
 							<TableHead>Status</TableHead>
 							<TableHead>Last Updated</TableHead>
 							<TableHead className="text-right">Actions</TableHead>
@@ -175,7 +174,6 @@ export function InventoryDataTable({
 									<TableCell className="font-medium">{item.name}</TableCell>
 									<TableCell>{item.category}</TableCell>
 									<TableCell>{item.quantity}</TableCell>
-									<TableCell>${item.price?.toFixed(2) || "0.00"}</TableCell>
 									<TableCell>
 										<Badge
 											variant={

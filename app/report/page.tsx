@@ -41,6 +41,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { ReportSkeleton } from "@/components/report-skeleton"
+import { saveAs } from "file-saver"
 
 // API endpoint
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
@@ -214,6 +215,36 @@ function CheckoutReportDetail({
 	)
 }
 
+function convertToCSV(data: CheckoutReport[]): string {
+	if (!data.length) return ""
+	const header = [
+		"No. Work Order",
+		"Tanggal Checkout",
+		"Project",
+		"Total Item",
+		"Operator",
+		"Status",
+		"Item Detail",
+	]
+	const rows = data.map((row) => {
+		const items = row.items
+			.map((item) => `${item.name} (${item.quantity} ${item.unit})`)
+			.join("; ")
+		return [
+			row.workOrder,
+			format(new Date(row.date), "dd/MM/yyyy"),
+			row.project,
+			row.totalItems,
+			row.operator,
+			row.status,
+			items,
+		]
+	})
+	return [header, ...rows]
+		.map((r) => r.map((v) => `"${v}"`).join(","))
+		.join("\n")
+}
+
 export default function ReportPage() {
 	const [date, setDate] = useState<Date | undefined>(undefined)
 	const [period, setPeriod] = useState("all")
@@ -229,67 +260,54 @@ export default function ReportPage() {
 		try {
 			setLoading(true)
 			setError("")
-
-			// Prepare query parameters
 			const queryParams = new URLSearchParams()
-
-			// Apply date filters if needed
 			if (date) {
 				queryParams.append("startDate", format(date, "yyyy-MM-dd"))
 				queryParams.append("endDate", format(date, "yyyy-MM-dd"))
 			} else if (period !== "all") {
 				const today = new Date()
 				let startDate
-
-				if (period === "week") {
-					startDate = subDays(today, 7)
-				} else if (period === "month") {
-					startDate = subDays(today, 30)
-				} else if (period === "quarter") {
-					startDate = subMonths(today, 3)
-				}
-
-				if (startDate) {
+				if (period === "week") startDate = subDays(today, 7)
+				else if (period === "month") startDate = subDays(today, 30)
+				else if (period === "quarter") startDate = subMonths(today, 3)
+				if (startDate)
 					queryParams.append("startDate", format(startDate, "yyyy-MM-dd"))
-				}
 			}
-
-			// Get token from localStorage
 			const token = localStorage.getItem("token")
 			if (!token) {
 				setError("Otentikasi diperlukan untuk melihat riwayat checkout")
 				setLoading(false)
-				// Use dummy data for development
 				setFilteredReports(checkoutReports)
 				return
 			}
-
-			// Prepare headers
 			const headers = {
 				"Content-Type": "application/json",
 				Authorization: `Bearer ${token}`,
 			}
-
-			// Make the API call
 			const response = await fetch(
-				`${API_URL}/api/inventory/checkout-history?${queryParams}`,
+				`${API_URL}/api/checkout/history?${queryParams}`,
 				{
 					method: "GET",
 					headers,
 				}
 			)
-
-			if (!response.ok) {
-				throw new Error(`Server error: ${response.status}`)
-			}
-
+			if (!response.ok) throw new Error(`Server error: ${response.status}`)
 			const result = await response.json()
-
 			if (result.success && Array.isArray(result.data)) {
-				setFilteredReports(result.data)
+				// Map backend data to frontend CheckoutReport type
+				setFilteredReports(
+					result.data.map((item: any) => ({
+						id: item._id,
+						date: item.checkoutDate,
+						workOrder: item.workOrder,
+						items: item.items,
+						totalItems: item.items.length,
+						operator: item.operator?.username || "-",
+						status: item.status,
+						project: item.project,
+					}))
+				)
 			} else {
-				// Use dummy data as fallback
-				console.log("Using dummy data as fallback")
 				setFilteredReports(checkoutReports)
 			}
 		} catch (err: unknown) {
@@ -297,9 +315,6 @@ export default function ReportPage() {
 			const errorMsg =
 				err instanceof Error ? err.message : "Gagal mengambil data"
 			setError(`Gagal mengambil data: ${errorMsg}`)
-
-			// Use dummy data when API fails
-			console.log("Using dummy data due to error")
 			setFilteredReports(checkoutReports)
 		} finally {
 			setLoading(false)
@@ -317,15 +332,31 @@ export default function ReportPage() {
 		if (date || period !== "all") {
 			fetchCheckoutHistory()
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [date, period])
+
+	// Filter by exact date if date is selected
+	const displayedReports = date
+		? filteredReports.filter((report) => {
+				const reportDate = new Date(report.date)
+				return (
+					reportDate.getFullYear() === date.getFullYear() &&
+					reportDate.getMonth() === date.getMonth() &&
+					reportDate.getDate() === date.getDate()
+				)
+		  })
+		: filteredReports
 
 	const handleViewDetail = (report: CheckoutReport) => {
 		setSelectedReport(report)
 	}
 
 	const handleExportCSV = () => {
-		alert("Ekspor laporan ke CSV (fitur dummy)")
+		const csv = convertToCSV(displayedReports)
+		const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+		saveAs(
+			blob,
+			`laporan-checkout-${format(new Date(), "yyyyMMdd-HHmmss")}.csv`
+		)
 	}
 
 	return (
@@ -481,7 +512,7 @@ export default function ReportPage() {
 																<CardDescription>
 																	{loading
 																		? "Memuat data..."
-																		: `${filteredReports.length} laporan ditemukan`}
+																		: `${displayedReports.length} laporan ditemukan`}
 																</CardDescription>
 															</CardHeader>
 															<CardContent>
@@ -505,8 +536,8 @@ export default function ReportPage() {
 																			</TableRow>
 																		</TableHeader>
 																		<TableBody>
-																			{filteredReports.length > 0 ? (
-																				filteredReports.map((report) => (
+																			{displayedReports.length > 0 ? (
+																				displayedReports.map((report) => (
 																					<TableRow key={report.id}>
 																						<TableCell className="font-medium">
 																							{report.workOrder}
