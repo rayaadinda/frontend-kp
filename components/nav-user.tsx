@@ -6,7 +6,7 @@ import {
 	IconUserCircle,
 } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { signOut, useSession } from "next-auth/react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -27,38 +27,16 @@ import {
 export function NavUser() {
 	const { isMobile } = useSidebar()
 	const router = useRouter()
-	const [user, setUser] = useState({
-		name: "Pengguna",
-		email: "pengguna@contoh.com",
+	const { data: session } = useSession()
+	const user = {
+		name: session?.user?.name || "Pengguna",
+		email: session?.user?.email || "pengguna@contoh.com",
 		avatar: "",
-	})
-	const [userInitials, setUserInitials] = useState("P")
+	}
+	const userInitials = user.name.charAt(0).toUpperCase()
 
-	useEffect(() => {
-		// Ambil info pengguna dari localStorage
-		const userJson = localStorage.getItem("user")
-		if (userJson) {
-			try {
-				const userData = JSON.parse(userJson)
-				setUser({
-					name: userData.username || "Pengguna",
-					email: userData.email || "pengguna@contoh.com",
-					avatar: userData.avatar || "",
-				})
-				// Ambil inisial dari username
-				setUserInitials((userData.username || "P").charAt(0).toUpperCase())
-			} catch (error) {
-				console.error("Error mengurai info pengguna:", error)
-			}
-		}
-	}, [])
-
-	const handleLogout = () => {
-		// Hapus data autentikasi
-		localStorage.removeItem("token")
-		localStorage.removeItem("user")
-
-		// Redirect ke halaman login
+	const handleLogout = async () => {
+		await signOut({ redirect: false })
 		router.push("/login")
 	}
 

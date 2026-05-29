@@ -22,6 +22,7 @@ import {
 import { z } from "zod"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
+import { getAuthToken } from "@/lib/auth-token"
 import { useRouter } from "next/navigation"
 import {
 	Dialog,
@@ -90,7 +91,7 @@ export function InventoryDataTable({
 		if (!editRowId || editQuantity == null) return
 		setIsSaving(true)
 		try {
-			const token = localStorage.getItem("token")
+			const token = await getAuthToken()
 			const res = await fetch(`${API_URL}/api/inventory/${editRowId}`, {
 				method: "PUT",
 				headers: {
@@ -116,7 +117,7 @@ export function InventoryDataTable({
 	const handleDelete = async (id: string) => {
 		setIsDeleting(true)
 		try {
-			const token = localStorage.getItem("token")
+			const token = await getAuthToken()
 			const res = await fetch(`${API_URL}/api/inventory/${id}`, {
 				method: "DELETE",
 				headers: {

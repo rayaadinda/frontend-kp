@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { getAuthToken } from "@/lib/auth-token"
 import {
 	IconAlertCircle,
 	IconArrowLeft,
@@ -50,8 +51,7 @@ export default function AddInventoryItemPage() {
 		setSuccess("")
 
 		try {
-			// Get token from localStorage
-			const token = localStorage.getItem("token")
+			const token = await getAuthToken()
 
 			if (!token) {
 				setError("Authentication required")

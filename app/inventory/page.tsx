@@ -6,13 +6,10 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { InventoryDataTable } from "@/components/inventory-data-table"
 import { InventoryDataTableSkeleton } from "@/components/inventory-data-table-skeleton"
 import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+import { getAuthToken } from "@/lib/auth-token"
 
 // API endpoint
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-
-// For development - set to false in production
-const BYPASS_AUTH_FOR_DEV = true
 
 interface InventoryItem {
 	id: number
@@ -53,15 +50,6 @@ export default function InventoryPage() {
 	const [inventory, setInventory] = useState<InventoryItem[]>([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState("")
-	const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-	// Mock login function for development
-	const handleDevLogin = () => {
-		// In a real app, this would call your backend login API
-		localStorage.setItem("token", "dev-token-for-testing")
-		setIsLoggedIn(true)
-		fetchInventory()
-	}
 
 	// Fetch inventory data function
 	const fetchInventory = async () => {
@@ -74,22 +62,15 @@ export default function InventoryPage() {
 				"Content-Type": "application/json",
 			}
 
-			// Get token from localStorage
-			const token = localStorage.getItem("token")
+			const token = await getAuthToken()
 
-			// For development, allow bypassing authentication
 			if (!token) {
-				if (BYPASS_AUTH_FOR_DEV) {
-					console.warn("Warning: Authentication bypassed for development")
-				} else {
-					setError("Authentication required")
-					setLoading(false)
-					return
-				}
-			} else {
-				headers["Authorization"] = `Bearer ${token}`
-				setIsLoggedIn(true)
+				setError("Authentication required")
+				setLoading(false)
+				return
 			}
+
+			headers["Authorization"] = `Bearer ${token}`
 
 			// Actual API call
 			const response = await fetch(`${API_URL}/api/inventory`, { headers })
@@ -149,14 +130,6 @@ export default function InventoryPage() {
 									<div className="bg-red-50 p-4 rounded-md border border-red-200">
 										<h3 className="text-red-600 font-medium mb-2">Error</h3>
 										<p className="text-red-500">{error}</p>
-										{error.includes("Authentication") && !isLoggedIn && (
-											<Button
-												onClick={handleDevLogin}
-												className="mt-4 bg-red-500 hover:bg-red-600"
-											>
-												Login (Development Only)
-											</Button>
-										)}
 									</div>
 								) : (
 									<InventoryDataTable

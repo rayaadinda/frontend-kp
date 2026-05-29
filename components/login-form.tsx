@@ -3,13 +3,12 @@
 import * as React from "react"
 import { useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { IconEye, IconEyeOff } from "@tabler/icons-react"
-
-// API endpoint
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
 export function LoginForm() {
 	const [email, setEmail] = useState("")
@@ -18,6 +17,7 @@ export function LoginForm() {
 	const [error, setError] = useState("")
 	const [isLoading, setIsLoading] = useState(false)
 	const searchParams = useSearchParams()
+	const router = useRouter()
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -25,69 +25,18 @@ export function LoginForm() {
 		setIsLoading(true)
 
 		try {
-			// Call the login API endpoint
-			const response = await fetch(`${API_URL}/api/auth/login`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ email, password }),
+			const result = await signIn("credentials", {
+				email,
+				password,
+				redirect: false,
 			})
 
-			// Handle rate limiting specifically
-			if (response.status === 429) {
-				throw new Error(
-					"Terlalu banyak permintaan. Silakan coba lagi dalam beberapa saat."
-				)
+			if (result?.error) {
+				throw new Error("Email atau kata sandi tidak valid")
 			}
 
-			// Check if the response is OK before trying to parse JSON
-			if (!response.ok) {
-				if (response.status === 404) {
-					throw new Error(
-						"Endpoint API tidak ditemukan. Periksa konfigurasi server."
-					)
-				}
-
-				// Try to parse response as JSON, but handle non-JSON responses gracefully
-				let errorMessage
-				try {
-					const errorData = await response.json()
-					errorMessage = errorData.message || `Error server: ${response.status}`
-				} catch {
-					errorMessage = `Error server: ${response.status}. Server tidak mengembalikan JSON yang valid.`
-				}
-
-				throw new Error(errorMessage)
-			}
-
-			// Parse response as JSON
-			let data
-			try {
-				data = await response.json()
-			} catch {
-				throw new Error(
-					"Respons tidak valid dari server: Bukan JSON yang valid"
-				)
-			}
-
-			if (data.success && data.token) {
-				// Store the token in localStorage
-				localStorage.setItem("token", data.token)
-
-				// Store user info if available
-				if (data.user) {
-					localStorage.setItem("user", JSON.stringify(data.user))
-				}
-
-				// Redirect after login
-				const returnUrl = searchParams.get("returnUrl") || "/dashboard"
-				window.location.href = returnUrl
-			} else {
-				throw new Error(
-					data.message || "Login gagal - tidak ada token diterima"
-				)
-			}
+			const returnUrl = searchParams.get("returnUrl") || "/dashboard"
+			router.push(returnUrl)
 		} catch (error: unknown) {
 			console.error("Error login:", error)
 			const errorMessage =
@@ -99,48 +48,58 @@ export function LoginForm() {
 	}
 
 	return (
-		<div className="space-y-6">
-			<div className="space-y-2 text-center">
-				<h1 className="text-3xl font-bold">Masuk</h1>
-				<p className="text-gray-500 dark:text-gray-400">
-					Masukkan kredensial Anda untuk mengakses akun
+		<div className="space-y-6 text-slate-700">
+			<div className="space-y-2">
+				<h1 className="font-[var(--font-sora)] text-3xl font-semibold text-slate-900">
+					Sign in
+				</h1>
+				<p className="text-sm text-slate-500">
+					Welcome back. Please enter your details.
 				</p>
 			</div>
 			{error && (
-				<div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm">
+				<div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
 					{error}
 				</div>
 			)}
 			<form onSubmit={handleSubmit} className="space-y-4">
 				<div className="space-y-2">
-					<Label htmlFor="email">Email</Label>
+					<Label htmlFor="email" className="text-sm text-slate-600">
+						Email
+					</Label>
 					<Input
 						id="email"
 						type="email"
-						placeholder="m@contoh.com"
+						placeholder="Enter your email"
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
 						required
+						className="h-11 rounded-md border border-slate-200 bg-slate-50/70 text-slate-900 placeholder:text-slate-400"
+						autoComplete="email"
 					/>
 				</div>
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
-						<Label htmlFor="password">Kata Sandi</Label>
+						<Label htmlFor="password" className="text-sm text-slate-600">
+							Password
+						</Label>
 					</div>
 					<div className="relative">
 						<Input
 							id="password"
 							type={showPassword ? "text" : "password"}
-							placeholder="••••••••"
+							placeholder="Enter your password"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
 							required
+							className="h-11 rounded-md border border-slate-200 bg-slate-50/70 pr-12 text-slate-900 placeholder:text-slate-400"
+							autoComplete="current-password"
 						/>
 						<Button
 							type="button"
 							variant="ghost"
 							size="icon"
-							className="absolute right-2 top-1/2 -translate-y-1/2"
+							className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 text-slate-400 hover:text-slate-600"
 							onClick={() => setShowPassword(!showPassword)}
 						>
 							{showPassword ? (
@@ -150,14 +109,18 @@ export function LoginForm() {
 							)}
 							<span className="sr-only">
 								{showPassword
-									? "Sembunyikan kata sandi"
-									: "Tampilkan kata sandi"}
+									? "Hide password"
+									: "Show password"}
 							</span>
 						</Button>
 					</div>
 				</div>
-				<Button type="submit" className="w-full" disabled={isLoading}>
-					{isLoading ? "Sedang masuk..." : "Masuk"}
+				<Button
+					type="submit"
+					className="h-11 w-full rounded-md bg-primary text-white hover:bg-primary/90"
+					disabled={isLoading}
+				>
+					{isLoading ? "Signing in..." : "Sign In"}
 				</Button>
 			</form>
 		</div>

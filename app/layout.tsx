@@ -1,10 +1,9 @@
 import type { Metadata } from "next"
 import { ThemeProvider } from "@/components/providers/theme-provider"
+import { AppSessionProvider } from "@/components/providers/session-provider"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
-import { AuthCheck } from "@/components/auth-check"
 import { Toaster } from "@/components/ui/sonner"
-import PageTransition from "@/components/PageTransition"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const geistSans = Geist({
@@ -33,16 +32,16 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
 				<Toaster />
-				<AuthCheck>
+				<AppSessionProvider>
 					<ThemeProvider
 						attribute="class"
 						defaultTheme="system"
 						enableSystem
 						disableTransitionOnChange
 					>
-						<PageTransition>{children}</PageTransition>
+						{children}
 					</ThemeProvider>
-				</AuthCheck>
+				</AppSessionProvider>
 				<SpeedInsights />
 			</body>
 		</html>
