@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { getAuthToken } from "@/lib/auth-token"
 import { ReportSkeleton } from "@/components/report-skeleton"
 import { saveAs } from "file-saver"
 
@@ -273,7 +274,7 @@ export default function ReportPage() {
 				if (startDate)
 					queryParams.append("startDate", format(startDate, "yyyy-MM-dd"))
 			}
-			const token = localStorage.getItem("token")
+			const token = await getAuthToken()
 			if (!token) {
 				setError("Otentikasi diperlukan untuk melihat riwayat checkout")
 				setLoading(false)
@@ -296,16 +297,28 @@ export default function ReportPage() {
 			if (result.success && Array.isArray(result.data)) {
 				// Map backend data to frontend CheckoutReport type
 				setFilteredReports(
-					result.data.map((item: any) => ({
-						id: item._id,
-						date: item.checkoutDate,
-						workOrder: item.workOrder,
-						items: item.items,
-						totalItems: item.items.length,
-						operator: item.operator?.username || "-",
-						status: item.status,
-						project: item.project,
-					}))
+					result.data.map((item: unknown) => {
+						const checkout = item as {
+							_id: string
+							checkoutDate: string
+							workOrder: string
+							items: CheckoutItem[]
+							operator?: { username?: string }
+							status: string
+							project: string
+						}
+
+						return {
+							id: checkout._id,
+							date: checkout.checkoutDate,
+							workOrder: checkout.workOrder,
+							items: checkout.items,
+							totalItems: checkout.items.length,
+							operator: checkout.operator?.username || "-",
+							status: checkout.status,
+							project: checkout.project,
+						}
+					})
 				)
 			} else {
 				setFilteredReports(checkoutReports)

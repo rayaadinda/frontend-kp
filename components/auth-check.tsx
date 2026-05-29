@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 
 interface AuthCheckProps {
 	children: React.ReactNode
@@ -11,6 +12,7 @@ export function AuthCheck({ children }: AuthCheckProps) {
 	const [isLoading, setIsLoading] = useState(true)
 	const router = useRouter()
 	const pathname = usePathname()
+	const { status } = useSession()
 
 	useEffect(() => {
 		// Skip auth check on login page to avoid redirect loop
@@ -19,19 +21,17 @@ export function AuthCheck({ children }: AuthCheckProps) {
 			return
 		}
 
-		const checkAuth = () => {
-			const token = localStorage.getItem("token")
-
-			if (!token) {
-				// Redirect to login page with return URL
-				router.push(`/login?returnUrl=${encodeURIComponent(pathname)}`)
-			} else {
-				setIsLoading(false)
-			}
+		if (status === "loading") {
+			return
 		}
 
-		checkAuth()
-	}, [pathname, router])
+		if (status === "unauthenticated") {
+			router.push(`/login?returnUrl=${encodeURIComponent(pathname)}`)
+			return
+		}
+
+		setIsLoading(false)
+	}, [pathname, router, status])
 
 	// Show nothing while checking authentication
 	if (isLoading && pathname !== "/login") {

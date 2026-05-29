@@ -34,6 +34,7 @@ import {
 } from "@tabler/icons-react"
 import { toast } from "sonner"
 import { CheckoutSkeleton } from "@/components/checkout-skeleton"
+import { getAuthToken } from "@/lib/auth-token"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
@@ -82,8 +83,7 @@ export default function CheckoutPage() {
 			setIsLoading(true)
 			setError("")
 
-			// Get token from localStorage
-			const token = localStorage.getItem("token")
+			const token = await getAuthToken()
 			if (!token) {
 				setError("Otentikasi diperlukan")
 				setIsLoading(false)
@@ -243,7 +243,7 @@ export default function CheckoutPage() {
 		setSuccess("")
 
 		try {
-			const token = localStorage.getItem("token")
+			const token = await getAuthToken()
 			if (!token) {
 				setError("Otentikasi diperlukan")
 				toast.error("Otentikasi diperlukan")
