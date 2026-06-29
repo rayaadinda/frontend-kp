@@ -350,7 +350,7 @@ export function InventoryDataTable({
 								<b>Nama:</b> {showDetail.name}
 							</p>
 							<p>
-								<b>Kategori:</b> {showDetail.category}
+								<b>Supplier:</b> {showDetail.supplier}
 							</p>
 							<p>
 								<b>Quantity:</b> {showDetail.quantity}

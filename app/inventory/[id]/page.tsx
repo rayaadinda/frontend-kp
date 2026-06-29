@@ -15,12 +15,21 @@ import { toast } from "sonner"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
+interface InventoryItemDetails {
+	_id: string
+	partNumber: string
+	partName: string
+	quantity: number
+	location: string
+	supplier: string
+}
+
 export default function InventoryDetailPage() {
 	const params = useParams()
 	const router = useRouter()
 	const id = params.id as string
 
-	const [item, setItem] = useState<any>(null)
+	const [item, setItem] = useState<InventoryItemDetails | null>(null)
 	const [loading, setLoading] = useState(true)
 
 	useEffect(() => {
@@ -36,7 +45,7 @@ export default function InventoryDetailPage() {
 				if (!res.ok) throw new Error("Gagal mengambil data barang")
 				
 				const data = await res.json()
-				const foundItem = data.data.find((i: any) => i._id === id)
+				const foundItem = data.data.find((i: InventoryItemDetails) => i._id === id)
 				if (foundItem) {
 					setItem(foundItem)
 				} else {
