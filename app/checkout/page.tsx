@@ -51,8 +51,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 // Define inventory item interface
 interface InventoryItem {
 	_id: string
-	productCode: string
-	productName: string
+	partNumber: string
+	partName: string
 	quantity: number
 	supplier: string
 	location: string
@@ -111,7 +111,7 @@ export default function CheckoutPage() {
 					const i = item as Record<string, unknown>
 					return {
 						...i,
-						unit: determineUnit((i.productName as string) || ""),
+						unit: determineUnit((i.partName as string) || ""),
 						minLevel: Math.round((i.quantity as number) * 0.1),
 					} as InventoryItem
 				})
@@ -121,7 +121,7 @@ export default function CheckoutPage() {
 				// Extract unique types for category filtering
 				const uniqueTypes = Array.from(
 					new Set(
-						items.map((item: InventoryItem) => determineType(item.productName))
+						items.map((item: InventoryItem) => determineType(item.partName))
 					)
 				) as string[]
 				setCategories(uniqueTypes)
@@ -137,8 +137,8 @@ export default function CheckoutPage() {
 	}
 
 	// Helper to determine unit based on product name
-	const determineUnit = (productName: string) => {
-		const lowerName = productName.toLowerCase()
+	const determineUnit = (partName: string) => {
+		const lowerName = partName.toLowerCase()
 		if (
 			lowerName.includes("wire") ||
 			lowerName.includes("cable") ||
@@ -150,8 +150,8 @@ export default function CheckoutPage() {
 	}
 
 	// Helper to determine item type based on product name
-	const determineType = (productName: string) => {
-		const lowerName = productName.toLowerCase()
+	const determineType = (partName: string) => {
+		const lowerName = partName.toLowerCase()
 		if (lowerName.includes("wire")) return "Wire"
 		if (lowerName.includes("terminal")) return "Terminal"
 		if (
@@ -179,14 +179,14 @@ export default function CheckoutPage() {
 			const query = searchQuery.toLowerCase()
 			results = results.filter(
 				(item) =>
-					item.productCode.toLowerCase().includes(query) ||
-					item.productName.toLowerCase().includes(query)
+					item.partNumber.toLowerCase().includes(query) ||
+					item.partName.toLowerCase().includes(query)
 			)
 		}
 
 		if (selectedCategory !== "All") {
 			results = results.filter(
-				(item) => determineType(item.productName) === selectedCategory
+				(item) => determineType(item.partName) === selectedCategory
 			)
 		}
 
@@ -253,7 +253,7 @@ export default function CheckoutPage() {
 			const checkoutData = {
 				workOrder: workOrderNumber,
 				items: cartItems.map((item) => ({
-					name: item.productName,
+					name: item.partName,
 					quantity: item.quantity,
 					unit: item.unit || "Pcs",
 				})),
@@ -510,9 +510,9 @@ export default function CheckoutPage() {
 																	searchResults.map((item) => (
 																		<TableRow key={item._id}>
 																			<TableCell className="font-medium">
-																				{item.productCode}
+																				{item.partNumber}
 																			</TableCell>
-																			<TableCell>{item.productName}</TableCell>
+																			<TableCell>{item.partName}</TableCell>
 																			<TableCell className="text-right">
 																				<span
 																					className={`${
@@ -600,9 +600,9 @@ export default function CheckoutPage() {
 																	cartItems.map((item) => (
 																		<TableRow key={`cart-${item._id}`}>
 																			<TableCell className="font-medium">
-																				{item.productCode}
+																				{item.partNumber}
 																			</TableCell>
-																			<TableCell>{item.productName}</TableCell>
+																			<TableCell>{item.partName}</TableCell>
 																			<TableCell className="text-right">
 																				{item.quantity} {item.unit || "Pcs"}
 																			</TableCell>

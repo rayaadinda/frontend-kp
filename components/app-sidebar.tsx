@@ -1,17 +1,15 @@
 "use client"
 
 import * as React from "react"
+import { useSession } from "next-auth/react"
 import {
-	IconCamera,
 	IconChartBar,
 	IconDashboard,
 	IconFileAi,
 	IconFileText,
-	IconFileDescription,
 	IconHelp,
 	IconInnerShadowTop,
 	IconReport,
-	IconSearch,
 	IconSettings,
 } from "@tabler/icons-react"
 
@@ -41,62 +39,24 @@ const data = {
 			icon: IconChartBar,
 		},
 		{
-			title: "Laporan",
-			url: "/report",
-			icon: IconFileText,
+			title: "Barang Masuk",
+			url: "/stock-in",
+			icon: IconReport,
 		},
 		{
-			title: "Checkout",
+			title: "Barang Keluar",
 			url: "/checkout",
 			icon: IconReport,
 		},
-	],
-	navClouds: [
 		{
-			title: "Capture",
-			icon: IconCamera,
-			isActive: true,
-			url: "#",
-			items: [
-				{
-					title: "Proposal Aktif",
-					url: "#",
-				},
-				{
-					title: "Arsip",
-					url: "#",
-				},
-			],
-		},
-		{
-			title: "Proposal",
-			icon: IconFileDescription,
-			url: "#",
-			items: [
-				{
-					title: "Proposal Aktif",
-					url: "#",
-				},
-				{
-					title: "Arsip",
-					url: "#",
-				},
-			],
-		},
-		{
-			title: "Prompts",
+			title: "Prediksi K-Means",
+			url: "/prediction",
 			icon: IconFileAi,
-			url: "#",
-			items: [
-				{
-					title: "Proposal Aktif",
-					url: "#",
-				},
-				{
-					title: "Arsip",
-					url: "#",
-				},
-			],
+		},
+		{
+			title: "Laporan",
+			url: "/report",
+			icon: IconFileText,
 		},
 	],
 	navSecondary: [
@@ -110,15 +70,18 @@ const data = {
 			url: "#",
 			icon: IconHelp,
 		},
-		{
-			title: "Pencarian",
-			url: "#",
-			icon: IconSearch,
-		},
 	],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+	const { data: session } = useSession()
+	const isAdmin = session?.user?.role === "admin"
+
+	const filteredNavMain = data.navMain.filter((item) => {
+		if (isAdmin) return true
+		return item.url === "/inventory" || item.url === "/checkout"
+	})
+
 	return (
 		<Sidebar collapsible="offcanvas" {...props}>
 			<SidebarHeader>
@@ -139,7 +102,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarContent>
-				<NavMain items={data.navMain} />
+				<NavMain items={filteredNavMain} />
 				<NavSecondary items={data.navSecondary} className="mt-auto" />
 			</SidebarContent>
 			<SidebarFooter>

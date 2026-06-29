@@ -66,6 +66,15 @@ interface CheckoutReport {
 	project: string
 }
 
+interface InventoryItem {
+	_id: string
+	partNumber: string
+	partName: string
+	supplier: string
+	location: string
+	quantity: number
+}
+
 // Dummy data untuk laporan checkout (digunakan sebagai fallback)
 const checkoutReports: CheckoutReport[] = [
 	{
@@ -253,6 +262,10 @@ export default function ReportPage() {
 	const [selectedReport, setSelectedReport] = useState<CheckoutReport | null>(
 		null
 	)
+	// State for Inventory Report
+	const [inventoryData, setInventoryData] = useState<InventoryItem[]>([])
+	const [loadingInventory, setLoadingInventory] = useState(false)
+
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState("")
 
@@ -337,14 +350,35 @@ export default function ReportPage() {
 	// Initial fetch
 	useEffect(() => {
 		fetchCheckoutHistory()
+		fetchInventoryReport()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
+
+	const fetchInventoryReport = async () => {
+		try {
+			setLoadingInventory(true)
+			const token = await getAuthToken()
+			if (!token) return
+			const response = await fetch(`${API_URL}/api/inventory`, {
+				headers: { Authorization: `Bearer ${token}` }
+			})
+			const result = await response.json()
+			if (result.success) {
+				setInventoryData(result.data)
+			}
+		} catch (error) {
+			console.error("Failed to fetch inventory report", error)
+		} finally {
+			setLoadingInventory(false)
+		}
+	}
 
 	// Filter reports based on selected date and period
 	useEffect(() => {
 		if (date || period !== "all") {
 			fetchCheckoutHistory()
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [date, period])
 
 	// Filter by exact date if date is selected
@@ -369,6 +403,26 @@ export default function ReportPage() {
 		saveAs(
 			blob,
 			`laporan-checkout-${format(new Date(), "yyyyMMdd-HHmmss")}.csv`
+		)
+	}
+
+	const handleExportInventoryCSV = () => {
+		if (!inventoryData.length) return
+		const header = ["Part Number", "Part Name", "Supplier", "Location", "Quantity"]
+		const rows = inventoryData.map((row) => [
+			row.partNumber,
+			row.partName,
+			row.supplier,
+			row.location,
+			row.quantity
+		])
+		const csv = [header, ...rows]
+			.map((r) => r.map((v) => `"${v}"`).join(","))
+			.join("\n")
+		const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+		saveAs(
+			blob,
+			`laporan-inventaris-${format(new Date(), "yyyyMMdd-HHmmss")}.csv`
 		)
 	}
 
@@ -616,16 +670,53 @@ export default function ReportPage() {
 
 											<TabsContent value="inventory">
 												<Card>
-													<CardHeader>
-														<CardTitle>Laporan Inventaris</CardTitle>
-														<CardDescription>
-															Fitur ini akan segera tersedia
-														</CardDescription>
+													<CardHeader className="flex flex-row items-center justify-between pb-3">
+														<div>
+															<CardTitle>Laporan Inventaris Saat Ini</CardTitle>
+															<CardDescription>
+																Ringkasan stok barang yang terdaftar di sistem
+															</CardDescription>
+														</div>
+														<Button variant="outline" size="sm" onClick={handleExportInventoryCSV}>
+															<Download className="mr-2 h-4 w-4" />
+															Ekspor Inventaris CSV
+														</Button>
 													</CardHeader>
-													<CardContent className="h-[400px] flex items-center justify-center">
-														<p className="text-muted-foreground">
-															Sedang dalam pengembangan
-														</p>
+													<CardContent>
+														{loadingInventory ? (
+															<div className="py-8 text-center text-muted-foreground">Memuat data inventaris...</div>
+														) : (
+															<div className="rounded-md border">
+																<Table>
+																	<TableHeader>
+																		<TableRow>
+																			<TableHead>Part Number</TableHead>
+																			<TableHead>Part Name</TableHead>
+																			<TableHead>Supplier</TableHead>
+																			<TableHead>Location</TableHead>
+																			<TableHead className="text-right">Qty Tersedia</TableHead>
+																		</TableRow>
+																	</TableHeader>
+																	<TableBody>
+																		{inventoryData.map(item => (
+																			<TableRow key={item._id}>
+																				<TableCell className="font-medium">{item.partNumber}</TableCell>
+																				<TableCell>{item.partName}</TableCell>
+																				<TableCell>{item.supplier}</TableCell>
+																				<TableCell>{item.location}</TableCell>
+																				<TableCell className="text-right">
+																					<Badge variant={item.quantity === 0 ? "destructive" : item.quantity < 10 ? "secondary" : "default"}
+																						className={item.quantity > 10 ? "bg-green-500 hover:bg-green-600" : item.quantity > 0 ? "bg-amber-500 hover:bg-amber-600" : ""}
+																					>
+																						{item.quantity}
+																					</Badge>
+																				</TableCell>
+																			</TableRow>
+																		))}
+																	</TableBody>
+																</Table>
+															</div>
+														)}
 													</CardContent>
 												</Card>
 											</TabsContent>

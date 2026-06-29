@@ -32,13 +32,14 @@ import {
 	DialogFooter,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
 export const inventorySchema = z.object({
 	id: z.number(),
 	name: z.string(),
-	category: z.string(),
+	supplier: z.string(),
 	quantity: z.number(),
 	price: z.number(),
 	status: z.enum(["In Stock", "Low Stock", "Out of Stock"]),
@@ -63,6 +64,8 @@ export function InventoryDataTable({
 	const [isDeleting, setIsDeleting] = useState(false)
 	const [showEditModal, setShowEditModal] = useState(false)
 	const router = useRouter()
+	const { data: session } = useSession()
+	const isAdmin = session?.user?.role === "admin"
 
 	// Ensure data is an array and not undefined
 	const safeData = Array.isArray(data) ? data : []
@@ -78,12 +81,12 @@ export function InventoryDataTable({
 				? item.name.toLowerCase().includes(searchQuery.toLowerCase())
 				: false
 
-		const categoryMatch =
-			item.category && typeof item.category === "string"
-				? item.category.toLowerCase().includes(searchQuery.toLowerCase())
+		const supplierMatch =
+			item.supplier && typeof item.supplier === "string"
+				? item.supplier.toLowerCase().includes(searchQuery.toLowerCase())
 				: false
 
-		return nameMatch || categoryMatch
+		return nameMatch || supplierMatch
 	})
 
 	// Update quantity API (modal)
@@ -151,17 +154,19 @@ export function InventoryDataTable({
 						onChange={(e) => setSearchQuery(e.target.value)}
 					/>
 				</div>
-				<Button onClick={() => router.push("/inventory/add")}>
-					<IconPlus className="mr-2 h-4 w-4" />
-					Add Item
-				</Button>
+				{isAdmin && (
+					<Button onClick={() => router.push("/inventory/add")}>
+						<IconPlus className="mr-2 h-4 w-4" />
+						Add Item
+					</Button>
+				)}
 			</div>
 			<div className="rounded-md border">
 				<Table>
 					<TableHeader>
 						<TableRow>
 							<TableHead>Name</TableHead>
-							<TableHead>Category</TableHead>
+							<TableHead>Supplier</TableHead>
 							<TableHead>Quantity</TableHead>
 							<TableHead>Status</TableHead>
 							<TableHead>Last Updated</TableHead>
@@ -171,9 +176,13 @@ export function InventoryDataTable({
 					<TableBody>
 						{filteredData.length > 0 ? (
 							filteredData.map((item) => (
-								<TableRow key={item.id}>
+								<TableRow 
+									key={item.id} 
+									className="cursor-pointer hover:bg-muted/50" 
+									onClick={() => router.push(`/inventory/${item.id}`)}
+								>
 									<TableCell className="font-medium">{item.name}</TableCell>
-									<TableCell>{item.category}</TableCell>
+									<TableCell>{item.supplier}</TableCell>
 									<TableCell>{item.quantity}</TableCell>
 									<TableCell>
 										<Badge
@@ -195,30 +204,41 @@ export function InventoryDataTable({
 												variant="ghost"
 												size="icon"
 												style={{ color: "#2563eb" }}
-												onClick={() => setShowDetail(item)}
+												onClick={(e) => {
+													e.stopPropagation();
+													router.push(`/inventory/${item.id}`);
+												}}
 											>
 												<IconInfoCircle className="h-4 w-4" />
 											</Button>
-											<Button
-												variant="ghost"
-												size="icon"
-												style={{ color: "#f59e42" }}
-												onClick={() => {
-													setEditRowId(String(item.id))
-													setEditQuantity(item.quantity)
-													setShowEditModal(true)
-												}}
-											>
-												<IconEdit className="h-4 w-4" />
-											</Button>
-											<Button
-												variant="ghost"
-												size="icon"
-												style={{ color: "#ef4444" }}
-												onClick={() => setDeleteRowId(String(item.id))}
-											>
-												<IconTrash className="h-4 w-4" />
-											</Button>
+											{isAdmin && (
+												<>
+													<Button
+														variant="ghost"
+														size="icon"
+														style={{ color: "#f59e42" }}
+														onClick={(e) => {
+															e.stopPropagation();
+															setEditRowId(String(item.id))
+															setEditQuantity(item.quantity)
+															setShowEditModal(true)
+														}}
+													>
+														<IconEdit className="h-4 w-4" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="icon"
+														style={{ color: "#ef4444" }}
+														onClick={(e) => {
+															e.stopPropagation();
+															setDeleteRowId(String(item.id));
+														}}
+													>
+														<IconTrash className="h-4 w-4" />
+													</Button>
+												</>
+											)}
 										</div>
 									</TableCell>
 								</TableRow>

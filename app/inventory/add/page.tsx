@@ -29,8 +29,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 export default function AddInventoryItemPage() {
 	const router = useRouter()
 	const [formData, setFormData] = useState({
-		productCode: "", // Updated field name to match backend
-		productName: "", // Updated field name to match backend
+		partNumber: "", // Updated field name to match backend
+		partName: "", // Updated field name to match backend
 		quantity: "",
 		supplier: "", // New field to match backend
 		location: "", // New field to match backend
@@ -84,8 +84,8 @@ export default function AddInventoryItemPage() {
 				setSuccess("Item added successfully!")
 				// Clear form
 				setFormData({
-					productCode: "",
-					productName: "",
+					partNumber: "",
+					partName: "",
 					quantity: "",
 					supplier: "",
 					location: "",
@@ -167,23 +167,23 @@ export default function AddInventoryItemPage() {
 										<CardContent className="space-y-4">
 											<div className="grid gap-4 sm:grid-cols-2">
 												<div className="space-y-2">
-													<Label htmlFor="productCode">Item Code</Label>
+													<Label htmlFor="partNumber">Item Code</Label>
 													<Input
-														id="productCode"
-														name="productCode"
+														id="partNumber"
+														name="partNumber"
 														placeholder="ULISO99AWG22"
-														value={formData.productCode}
+														value={formData.partNumber}
 														onChange={handleChange}
 														required
 													/>
 												</div>
 												<div className="space-y-2">
-													<Label htmlFor="productName">Item Name</Label>
+													<Label htmlFor="partName">Item Name</Label>
 													<Input
-														id="productName"
-														name="productName"
+														id="partName"
+														name="partName"
 														placeholder="Wire AWG 22 Colour Red"
-														value={formData.productName}
+														value={formData.partName}
 														onChange={handleChange}
 														required
 													/>
