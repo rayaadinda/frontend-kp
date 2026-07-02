@@ -6,10 +6,16 @@ import {
 	AreaChart,
 	CartesianGrid,
 	XAxis,
-	ResponsiveContainer,
-	Tooltip,
-	Legend,
 } from "recharts"
+
+import {
+	ChartConfig,
+	ChartContainer,
+	ChartTooltip,
+	ChartTooltipContent,
+	ChartLegend,
+	ChartLegendContent,
+} from "@/components/ui/chart"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import {
@@ -28,33 +34,27 @@ import {
 } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
-// Data pergerakan inventaris (pengambilan vs pengisian)
-const inventoryChartData = [
-	{ date: "2024-04-01", checkouts: 120, restocks: 50 },
-	{ date: "2024-04-05", checkouts: 85, restocks: 120 },
-	{ date: "2024-04-10", checkouts: 150, restocks: 80 },
-	{ date: "2024-04-15", checkouts: 90, restocks: 180 },
-	{ date: "2024-04-20", checkouts: 120, restocks: 70 },
-	{ date: "2024-04-25", checkouts: 180, restocks: 200 },
-	{ date: "2024-04-30", checkouts: 110, restocks: 90 },
-	{ date: "2024-05-05", checkouts: 140, restocks: 160 },
-	{ date: "2024-05-10", checkouts: 190, restocks: 100 },
-	{ date: "2024-05-15", checkouts: 160, restocks: 180 },
-	{ date: "2024-05-20", checkouts: 130, restocks: 90 },
-	{ date: "2024-05-25", checkouts: 170, restocks: 210 },
-	{ date: "2024-05-30", checkouts: 150, restocks: 130 },
-	{ date: "2024-06-05", checkouts: 200, restocks: 180 },
-	{ date: "2024-06-10", checkouts: 170, restocks: 120 },
-	{ date: "2024-06-15", checkouts: 190, restocks: 220 },
-	{ date: "2024-06-20", checkouts: 210, restocks: 150 },
-	{ date: "2024-06-25", checkouts: 180, restocks: 210 },
-	{ date: "2024-06-30", checkouts: 230, restocks: 190 },
-]
+const chartConfig = {
+	checkouts: {
+		label: "Pengambilan",
+		color: "var(--chart-2)",
+	},
+	restocks: {
+		label: "Pengisian",
+		color: "var(--chart-3)",
+	},
+} satisfies ChartConfig
 
-export function InventoryChart() {
+export function InventoryChart({ data }: { data?: { date: string; checkouts: number; restocks?: number }[] }) {
 	const isMobile = useIsMobile()
-	const [timeRange, setTimeRange] = React.useState("90d")
-	const [filteredData, setFilteredData] = React.useState(inventoryChartData)
+	const [timeRange, setTimeRange] = React.useState("30d")
+	const [filteredData, setFilteredData] = React.useState(data || [])
+
+	React.useEffect(() => {
+		if (data) {
+			setFilteredData(data)
+		}
+	}, [data])
 
 	React.useEffect(() => {
 		if (isMobile) {
@@ -63,9 +63,10 @@ export function InventoryChart() {
 	}, [isMobile])
 
 	React.useEffect(() => {
-		const filtered = inventoryChartData.filter((item) => {
+		if (!data) return;
+		const filtered = data.filter((item) => {
 			const date = new Date(item.date)
-			const referenceDate = new Date("2024-06-30")
+			const referenceDate = new Date() // Use current date for real data
 			let daysToSubtract = 90
 			if (timeRange === "30d") {
 				daysToSubtract = 30
@@ -77,7 +78,7 @@ export function InventoryChart() {
 			return date >= startDate
 		})
 		setFilteredData(filtered)
-	}, [timeRange])
+	}, [timeRange, data])
 
 	if (!filteredData || filteredData.length === 0) {
 		return (
@@ -137,93 +138,68 @@ export function InventoryChart() {
 				</div>
 			</CardHeader>
 			<CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-				<div className="h-[250px] w-full">
-					<ResponsiveContainer width="100%" height="100%">
-						<AreaChart data={filteredData}>
-							<defs>
-								<linearGradient
-									id="checkoutsGradient"
-									x1="0"
-									y1="0"
-									x2="0"
-									y2="1"
-								>
-									<stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-									<stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
-								</linearGradient>
-								<linearGradient
-									id="restocksGradient"
-									x1="0"
-									y1="0"
-									x2="0"
-									y2="1"
-								>
-									<stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-									<stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
-								</linearGradient>
-							</defs>
-							<XAxis
-								dataKey="date"
-								tickFormatter={(tick) => {
-									const date = new Date(tick)
-									return `${date.getDate()}/${date.getMonth() + 1}`
-								}}
-								stroke="#888"
-								fontSize={12}
-							/>
-							<CartesianGrid
-								strokeDasharray="3 3"
-								vertical={false}
-								stroke="#e5e7eb"
-							/>
-							<Tooltip
-								contentStyle={{
-									backgroundColor: "white",
-									borderRadius: "0.5rem",
-									border: "1px solid #e5e7eb",
-									boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
-								}}
-								formatter={(value, name) => {
-									return [
-										`${value} unit`,
-										name === "checkouts" ? "Pengambilan" : "Pengisian",
-									]
-								}}
-								labelFormatter={(label) => {
-									const date = new Date(label)
-									return date.toLocaleDateString("id-ID", {
-										month: "short",
-										day: "numeric",
-										year: "numeric",
-									})
-								}}
-							/>
-							<Legend
-								formatter={(value) => {
-									return value === "checkouts" ? "Pengambilan" : "Pengisian"
-								}}
-							/>
-							<Area
-								type="monotone"
-								dataKey="checkouts"
-								stroke="#3b82f6"
-								fillOpacity={1}
-								fill="url(#checkoutsGradient)"
-								name="checkouts"
-								stackId="1"
-							/>
-							<Area
-								type="monotone"
-								dataKey="restocks"
-								stroke="#10b981"
-								fillOpacity={1}
-								fill="url(#restocksGradient)"
-								name="restocks"
-								stackId="2"
-							/>
-						</AreaChart>
-					</ResponsiveContainer>
-				</div>
+				<ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+					<AreaChart data={filteredData}>
+						<defs>
+							<linearGradient
+								id="checkoutsGradient"
+								x1="0"
+								y1="0"
+								x2="0"
+								y2="1"
+							>
+								<stop offset="5%" stopColor="var(--color-checkouts)" stopOpacity={0.8} />
+								<stop offset="95%" stopColor="var(--color-checkouts)" stopOpacity={0.1} />
+							</linearGradient>
+							<linearGradient
+								id="restocksGradient"
+								x1="0"
+								y1="0"
+								x2="0"
+								y2="1"
+							>
+								<stop offset="5%" stopColor="var(--color-restocks)" stopOpacity={0.8} />
+								<stop offset="95%" stopColor="var(--color-restocks)" stopOpacity={0.1} />
+							</linearGradient>
+						</defs>
+						<XAxis
+							dataKey="date"
+							tickLine={false}
+							axisLine={false}
+							tickMargin={8}
+							minTickGap={32}
+							tickFormatter={(value) => {
+								const date = new Date(value)
+								return date.toLocaleDateString("id-ID", {
+									month: "short",
+									day: "numeric",
+								})
+							}}
+						/>
+						<CartesianGrid vertical={false} />
+						<ChartTooltip
+							cursor={false}
+							content={<ChartTooltipContent />}
+						/>
+						<ChartLegend content={<ChartLegendContent />} />
+						<Area
+							type="monotone"
+							dataKey="restocks"
+							stroke="var(--color-restocks)"
+							fillOpacity={1}
+							fill="url(#restocksGradient)"
+							stackId="1"
+						/>
+						<Area
+							type="monotone"
+							dataKey="checkouts"
+							stroke="var(--color-checkouts)"
+							fillOpacity={1}
+							fill="url(#checkoutsGradient)"
+							stackId="1"
+						/>
+					</AreaChart>
+				</ChartContainer>
 			</CardContent>
 		</Card>
 	)

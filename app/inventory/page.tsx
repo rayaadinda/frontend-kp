@@ -14,7 +14,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 interface InventoryItem {
 	id: number
 	name: string
-	category: string
+	supplier: string
 	quantity: number
 	price: number
 	status: "In Stock" | "Low Stock" | "Out of Stock"
@@ -37,8 +37,8 @@ const mapApiDataToInventoryItem = (apiData: unknown): InventoryItem => {
 
 	return {
 		id: item._id as number,
-		name: item.productName as string,
-		category: (item.supplier as string) || "General",
+		name: item.partName as string,
+		supplier: (item.supplier as string) || "-",
 		quantity: item.quantity as number,
 		price: 0,
 		status: status,
