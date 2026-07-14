@@ -11,6 +11,7 @@ import {
 	IconInnerShadowTop,
 	IconReport,
 	IconSettings,
+	IconShoppingCart,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -52,6 +53,11 @@ const data = {
 			title: "Prediksi K-Means",
 			url: "/prediction",
 			icon: IconFileAi,
+		},
+		{
+			title: "Purchase Order",
+			url: "/purchase-order",
+			icon: IconShoppingCart,
 		},
 		{
 			title: "Laporan",
