@@ -55,6 +55,11 @@ const data = {
 			icon: IconFileAi,
 		},
 		{
+			title: "Master B.O.M",
+			url: "/bom",
+			icon: IconReport,
+		},
+		{
 			title: "Purchase Order",
 			url: "/purchase-order",
 			icon: IconShoppingCart,

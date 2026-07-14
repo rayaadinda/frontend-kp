@@ -511,7 +511,6 @@ export default function ReportPage() {
 																					setDate(newDate)
 																					setPeriod("all")
 																				}}
-																				initialFocus
 																			/>
 																		</PopoverContent>
 																	</Popover>

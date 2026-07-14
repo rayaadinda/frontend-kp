@@ -20,6 +20,7 @@ interface InventoryItemDetails {
 	partNumber: string
 	partName: string
 	quantity: number
+	unit: string
 	location: string
 	supplier: string
 }
@@ -111,7 +112,7 @@ export default function InventoryDetailPage() {
 										<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t">
 											<div className="flex flex-col gap-1">
 												<span className="text-sm text-muted-foreground flex items-center gap-1"><IconPackage className="h-4 w-4"/> Stok Aktual</span>
-												<span className="text-2xl font-bold">{item.quantity}</span>
+												<span className="text-2xl font-bold">{item.quantity} <span className="text-sm font-normal text-muted-foreground">{item.unit || 'Pcs'}</span></span>
 											</div>
 											<div className="flex flex-col gap-1">
 												<span className="text-sm text-muted-foreground flex items-center gap-1"><IconMapPin className="h-4 w-4"/> Lokasi</span>
