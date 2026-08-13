@@ -61,6 +61,9 @@ export default function StockInPage() {
 	const [activities, setActivities] = useState<Transaction[]>([])
 	const [searchQuery, setSearchQuery] = useState("")
 	const [dateFilter, setDateFilter] = useState("")
+	const [monthFilter, setMonthFilter] = useState(String(new Date().getMonth() + 1))
+	const [yearFilter] = useState(String(new Date().getFullYear()))
+	const [limit, setLimit] = useState("20")
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
@@ -100,15 +103,7 @@ export default function StockInPage() {
 				setBoms(bomData.data)
 			}
 
-			// Fetch Activities
-			const actRes = await fetch(`${API_URL}/api/inventory/stock-ins/history?limit=10`, {
-				headers: { Authorization: `Bearer ${token}` }
-			})
-			const actData = await actRes.json()
-			if (actData.success) {
-				setActivities(actData.data)
-			}
-
+			// Fetch Activities is handled separately now
 		} catch (error) {
 			console.error("Failed to fetch data", error)
 			toast.error("Gagal mengambil data.")
@@ -120,6 +115,40 @@ export default function StockInPage() {
 	useEffect(() => {
 		fetchInventory()
 	}, [])
+
+	const fetchHistory = async () => {
+		try {
+			const token = await getAuthToken()
+			if (!token) return
+
+			let url = `${API_URL}/api/inventory/stock-ins/history?limit=${limit}`
+			
+			if (dateFilter) {
+				url += `&startDate=${dateFilter}T00:00:00.000Z&endDate=${dateFilter}T23:59:59.999Z`
+			} else if (monthFilter !== "all" && yearFilter) {
+				const y = parseInt(yearFilter)
+				const m = parseInt(monthFilter)
+				const start = new Date(y, m - 1, 1).toISOString()
+				const end = new Date(y, m, 0, 23, 59, 59, 999).toISOString()
+				url += `&startDate=${start}&endDate=${end}`
+			}
+
+			const actRes = await fetch(url, {
+				headers: { Authorization: `Bearer ${token}` }
+			})
+			const actData = await actRes.json()
+			if (actData.success) {
+				setActivities(actData.data)
+			}
+		} catch (e) {
+			console.error("Failed to fetch history", e)
+		}
+	}
+
+	useEffect(() => {
+		fetchHistory()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [limit, dateFilter, monthFilter, yearFilter])
 
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		try {
@@ -148,6 +177,7 @@ export default function StockInPage() {
 			toast.success("Barang masuk berhasil dicatat!")
 			form.reset()
 			fetchInventory() // Refresh qty
+			fetchHistory() // Refresh history
 		} catch (error: unknown) {
 			console.error(error)
 			const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan"
@@ -165,6 +195,15 @@ export default function StockInPage() {
 		quantity: 1,
 		notes: ""
 	})
+	const [leocoCustomItems, setLeocoCustomItems] = useState<Record<string, number>>({})
+
+	const getAutoQuantity = (item: BomItem, quantity: number) => {
+		const baseQty = item.quantityRequired * quantity;
+		if (item.unit === 'Meter' || (item.childPartName && item.childPartName.toLowerCase().includes('wire'))) {
+			return Math.ceil(baseQty / 200) * 200;
+		}
+		return Number(baseQty.toFixed(3));
+	}
 
 	const onSubmitLeoco = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -184,13 +223,21 @@ export default function StockInPage() {
 			const token = await getAuthToken()
 			if (!token) throw new Error("Unauthorized")
 
+			const items = selectedBom.items.map((item: BomItem) => ({
+				partNumber: item.childPartNumber,
+				quantity: leocoCustomItems[item.childPartNumber] ?? getAutoQuantity(item, leocoForm.quantity)
+			}))
+
 			const response = await fetch(`${API_URL}/api/inventory/stock-in-bom`, {
 				method: "POST",
 				headers: {
 					"Authorization": `Bearer ${token}`,
 					"Content-Type": "application/json"
 				},
-				body: JSON.stringify(leocoForm)
+				body: JSON.stringify({
+					...leocoForm,
+					items
+				})
 			})
 
 			const data = await response.json()
@@ -201,6 +248,7 @@ export default function StockInPage() {
 
 			toast.success(data.message || "Penerimaan BOM LEOCO berhasil!")
 			setLeocoForm({ kingPartNumber: "", workOrder: "", quantity: 1, notes: "" })
+			setLeocoCustomItems({})
 			fetchInventory() // Refresh qty
 		} catch (error: unknown) {
 			console.error(error)
@@ -231,7 +279,7 @@ export default function StockInPage() {
 									<IconPackageImport className="className='size-6'" />
 								</div>
 								<div>
-									<h1 className="text-2xl font-bold tracking-tight">Penerimaan Barang (Stock-in)</h1>
+									<h1 className="text-2xl font-semibold tracking-tight">Penerimaan Barang (Stock-in)</h1>
 									<p className="text-muted-foreground text-sm">
 										Catat penerimaan komponen baru ke gudang untuk menambah stok
 									</p>
@@ -399,7 +447,7 @@ export default function StockInPage() {
 											{selectedItem ? (
 												<div className="space-y-6">
 													<div>
-														<h3 className="text-xl font-bold text-foreground mb-1">{selectedItem.partName}</h3>
+														<h3 className="text-xl font-semibold text-foreground mb-1">{selectedItem.partName}</h3>
 														<div className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold font-mono bg-background text-muted-foreground">
 															{selectedItem.partNumber}
 														</div>
@@ -408,7 +456,7 @@ export default function StockInPage() {
 													<div className="grid grid-cols-2 gap-4">
 														<div className="bg-background rounded-lg p-3 border shadow-sm flex flex-col gap-1">
 															<span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Stok Saat Ini</span>
-															<span className="text-2xl font-bold">{selectedItem.quantity}</span>
+															<span className="text-2xl font-medium">{selectedItem.quantity}</span>
 														</div>
 														<div className="bg-background rounded-lg p-3 border shadow-sm flex flex-col justify-center gap-1">
 															<span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Lokasi Rack</span>
@@ -566,8 +614,35 @@ export default function StockInPage() {
 																					<td className="px-4 py-3 text-right tabular-nums text-muted-foreground text-xs">
 																						{item.quantityRequired} {item.unit === 'Meter' ? 'm' : 'pcs'}
 																					</td>
-																					<td className="px-4 py-3 text-right tabular-nums font-semibold text-primary text-xs">
-																						{Number((item.quantityRequired * leocoForm.quantity).toFixed(3))} {item.unit === 'Meter' ? 'm' : 'pcs'}
+																					<td className="px-4 py-3 text-right">
+																						<div className="flex flex-col items-end gap-1">
+																							<div className="flex items-center justify-end gap-1">
+																								<Input
+																									type="number"
+																									value={leocoCustomItems[item.childPartNumber] ?? getAutoQuantity(item, leocoForm.quantity)}
+																									onChange={(e) => setLeocoCustomItems(prev => ({...prev, [item.childPartNumber]: Number(e.target.value)}))}
+																									className="w-24 h-8 text-right font-semibold text-primary px-2"
+																									step="0.001"
+																								/>
+																								<span className="text-muted-foreground w-6 text-left text-xs tabular-nums">
+																									{item.unit === 'Meter' ? 'm' : 'pcs'}
+																								</span>
+																							</div>
+																							{(item.unit === 'Meter' || (item.childPartName && item.childPartName.toLowerCase().includes('wire'))) && (
+																								<div className="flex items-center justify-end gap-1">
+																									<Input
+																										type="number"
+																										value={Math.ceil((leocoCustomItems[item.childPartNumber] ?? getAutoQuantity(item, leocoForm.quantity)) / 200)}
+																										onChange={(e) => setLeocoCustomItems(prev => ({...prev, [item.childPartNumber]: Number(e.target.value) * 200}))}
+																										className="w-24 h-8 text-right text-xs font-medium text-muted-foreground px-2"
+																										step="1"
+																									/>
+																									<span className="text-muted-foreground w-6 text-left text-[10px]">
+																										roll
+																									</span>
+																								</div>
+																							)}
+																						</div>
 																					</td>
 																				</tr>
 																			))}
@@ -603,18 +678,49 @@ export default function StockInPage() {
 										<CardTitle className="text-lg">Riwayat Barang Masuk Terbaru</CardTitle>
 										<CardDescription>Daftar transaksi barang masuk</CardDescription>
 									</div>
-									<div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+									<div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
 										<Input 
-											placeholder="Cari ID, WO, atau Part..." 
+											placeholder="Cari ID, WO, Part..." 
 											value={searchQuery}
 											onChange={(e) => setSearchQuery(e.target.value)}
-											className="w-full sm:w-[200px]"
+											className="w-full sm:w-[150px]"
 										/>
+										<Select value={limit} onValueChange={setLimit}>
+											<SelectTrigger className="w-full sm:w-[80px]">
+												<SelectValue placeholder="Limit" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="10">10</SelectItem>
+												<SelectItem value="20">20</SelectItem>
+												<SelectItem value="30">30</SelectItem>
+												<SelectItem value="50">50</SelectItem>
+											</SelectContent>
+										</Select>
+										<Select value={monthFilter} onValueChange={(v) => { setMonthFilter(v); setDateFilter(""); }}>
+											<SelectTrigger className="w-full sm:w-[110px]">
+												<SelectValue placeholder="Bulan" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="all">Semua</SelectItem>
+												<SelectItem value="1">Jan</SelectItem>
+												<SelectItem value="2">Feb</SelectItem>
+												<SelectItem value="3">Mar</SelectItem>
+												<SelectItem value="4">Apr</SelectItem>
+												<SelectItem value="5">Mei</SelectItem>
+												<SelectItem value="6">Jun</SelectItem>
+												<SelectItem value="7">Jul</SelectItem>
+												<SelectItem value="8">Agu</SelectItem>
+												<SelectItem value="9">Sep</SelectItem>
+												<SelectItem value="10">Okt</SelectItem>
+												<SelectItem value="11">Nov</SelectItem>
+												<SelectItem value="12">Des</SelectItem>
+											</SelectContent>
+										</Select>
 										<Input 
 											type="date"
 											value={dateFilter}
-											onChange={(e) => setDateFilter(e.target.value)}
-											className="w-full sm:w-[150px]"
+											onChange={(e) => { setDateFilter(e.target.value); setMonthFilter("all"); }}
+											className="w-full sm:w-[140px]"
 										/>
 									</div>
 								</CardHeader>
@@ -634,15 +740,11 @@ export default function StockInPage() {
 												{(() => {
 													const filteredActivities = activities.filter(act => {
 														const searchStr = searchQuery.toLowerCase()
-														const matchSearch = !searchStr || 
-															(act.transactionId && act.transactionId.toLowerCase().includes(searchStr)) ||
+														if (!searchStr) return true
+														return (act.transactionId && act.transactionId.toLowerCase().includes(searchStr)) ||
 															(act.workOrder && act.workOrder.toLowerCase().includes(searchStr)) ||
 															(act.kingPartNumber && act.kingPartNumber.toLowerCase().includes(searchStr)) ||
 															(act.performedBy?.name && act.performedBy.name.toLowerCase().includes(searchStr))
-														
-														const matchDate = !dateFilter || new Date(act.createdAt).toISOString().split('T')[0] === dateFilter
-														
-														return matchSearch && matchDate
 													})
 
 													if (filteredActivities.length === 0) {
@@ -655,7 +757,7 @@ export default function StockInPage() {
 															<td className="px-4 py-3 font-medium">{act.kingPartNumber || act.items?.[0]?.partNumber || "-"} {act.quantity ? `(Qty: ${act.quantity})` : ''}</td>
 															<td className="px-4 py-3">{act.workOrder || "-"}</td>
 															<td className="px-4 py-3">{act.performedBy?.name || "System"}</td>
-															<td className="px-4 py-3 whitespace-nowrap text-xs">{new Date(act.createdAt).toLocaleString('id-ID')}</td>
+															<td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{new Date(act.createdAt).toLocaleString("id-ID")}</td>
 														</tr>
 													))
 												})()}

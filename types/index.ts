@@ -40,6 +40,7 @@ export interface Transaction {
     notes?: string;
     status?: string;
     type?: string;
+    details?: string;
     operator?: User;
     createdBy?: User;
     performedBy?: User;

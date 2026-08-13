@@ -309,7 +309,7 @@ export default function CreatePOPage() {
 										</Button>
 									</Link>
 									<div>
-										<h1 className="text-2xl font-bold tracking-tight">Buat Purchase Order</h1>
+										<h1 className="text-2xl font-semibold tracking-tight">Buat Purchase Order</h1>
 										<p className="text-muted-foreground text-sm">
 											Isi formulir di bawah untuk membuat dokumen PO baru
 										</p>
@@ -716,8 +716,8 @@ export default function CreatePOPage() {
 											</div>
 											<Separator />
 											<div className="flex justify-between">
-												<span className="font-bold">Grand Total</span>
-												<span className="font-bold text-lg">{formatRupiah(grandTotal)}</span>
+												<span className="font-semibold">Grand Total</span>
+												<span className="font-semibold text-lg">{formatRupiah(grandTotal)}</span>
 											</div>
 											<Separator />
 

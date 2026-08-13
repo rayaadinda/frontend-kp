@@ -93,6 +93,9 @@ export default function CheckoutPage() {
 	const [activities, setActivities] = useState<Transaction[]>([])
 	const [historySearchQuery, setHistorySearchQuery] = useState("")
 	const [historyDateFilter, setHistoryDateFilter] = useState("")
+	const [historyMonthFilter, setHistoryMonthFilter] = useState(String(new Date().getMonth() + 1))
+	const [historyYearFilter] = useState(String(new Date().getFullYear()))
+	const [historyLimit, setHistoryLimit] = useState("20")
 
 	// Fetch inventory data from API
 	const fetchInventory = async () => {
@@ -163,14 +166,7 @@ export default function CheckoutPage() {
 				setBoms(bomData.data)
 			}
 
-			// Fetch Activities Checkout
-			const actRes = await fetch(`${API_URL}/api/checkout/history?limit=10`, {
-				headers: { Authorization: `Bearer ${token}` }
-			})
-			const actData = await actRes.json()
-			if (actData.success) {
-				setActivities(actData.data)
-			}
+			// Fetch Activities Checkout is handled separately now
 		} catch (err: unknown) {
 			console.error("Error fetching inventory:", err)
 			const errorMsg =
@@ -213,6 +209,40 @@ export default function CheckoutPage() {
 		fetchInventory()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
+
+	const fetchHistory = async () => {
+		try {
+			const token = await getAuthToken()
+			if (!token) return
+
+			let url = `${API_URL}/api/checkout/history?limit=${historyLimit}`
+			
+			if (historyDateFilter) {
+				url += `&startDate=${historyDateFilter}T00:00:00.000Z&endDate=${historyDateFilter}T23:59:59.999Z`
+			} else if (historyMonthFilter !== "all" && historyYearFilter) {
+				const y = parseInt(historyYearFilter)
+				const m = parseInt(historyMonthFilter)
+				const start = new Date(y, m - 1, 1).toISOString()
+				const end = new Date(y, m, 0, 23, 59, 59, 999).toISOString()
+				url += `&startDate=${start}&endDate=${end}`
+			}
+
+			const actRes = await fetch(url, {
+				headers: { Authorization: `Bearer ${token}` }
+			})
+			const actData = await actRes.json()
+			if (actData.success) {
+				setActivities(actData.data)
+			}
+		} catch (err) {
+			console.error("Error fetching history", err)
+		}
+	}
+
+	useEffect(() => {
+		fetchHistory()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [historyLimit, historyDateFilter, historyMonthFilter, historyYearFilter])
 
 	// Filter materials based on search query and category
 	useEffect(() => {
@@ -347,6 +377,7 @@ export default function CheckoutPage() {
 				setWorkOrderNumber("")
 				setCheckoutDate(new Date())
 				fetchInventory()
+				fetchHistory()
 			} else {
 				throw new Error(data.message || "Checkout gagal")
 			}
@@ -412,14 +443,14 @@ export default function CheckoutPage() {
 			
 			const data = await res.json()
 			if (!res.ok) throw new Error(data.message || "Gagal memproses produksi LEOCO")
-			
 			toast.success(data.message, { style: { background: "green" } })
 			setLeocoKingPart("")
 			setLeocoWorkOrder("")
 			setLeocoQty(1)
 			setLeocoNotes("")
 			fetchInventory()
-		} catch (err) {
+			fetchHistory()
+		} catch (err: unknown) {
 			const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan"
 			toast.error(errorMessage, { style: { background: "red" } })
 		} finally {
@@ -443,7 +474,7 @@ export default function CheckoutPage() {
 					<div className="@container/main flex flex-1 flex-col gap-2">
 						<div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
 							<div className="px-4 lg:px-6">
-								<h1 className="text-2xl font-bold tracking-tight">
+								<h1 className="text-2xl font-semibold tracking-tight">
 									Pengambilan Material
 								</h1>
 								<p className="text-muted-foreground">
@@ -962,18 +993,49 @@ export default function CheckoutPage() {
 										<CardTitle className="text-lg">Riwayat Barang Keluar Terbaru</CardTitle>
 										<CardDescription>Daftar transaksi pengeluaran/produksi</CardDescription>
 									</div>
-									<div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+									<div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
 										<Input 
 											placeholder="Cari WO, Target Produksi, dll..." 
 											value={historySearchQuery}
 											onChange={(e) => setHistorySearchQuery(e.target.value)}
-											className="w-full sm:w-[200px]"
+											className="w-full sm:w-[150px]"
 										/>
+										<Select value={historyLimit} onValueChange={setHistoryLimit}>
+											<SelectTrigger className="w-full sm:w-[80px]">
+												<SelectValue placeholder="Limit" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="10">10</SelectItem>
+												<SelectItem value="20">20</SelectItem>
+												<SelectItem value="30">30</SelectItem>
+												<SelectItem value="50">50</SelectItem>
+											</SelectContent>
+										</Select>
+										<Select value={historyMonthFilter} onValueChange={(v) => { setHistoryMonthFilter(v); setHistoryDateFilter(""); }}>
+											<SelectTrigger className="w-full sm:w-[110px]">
+												<SelectValue placeholder="Bulan" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="all">Semua</SelectItem>
+												<SelectItem value="1">Jan</SelectItem>
+												<SelectItem value="2">Feb</SelectItem>
+												<SelectItem value="3">Mar</SelectItem>
+												<SelectItem value="4">Apr</SelectItem>
+												<SelectItem value="5">Mei</SelectItem>
+												<SelectItem value="6">Jun</SelectItem>
+												<SelectItem value="7">Jul</SelectItem>
+												<SelectItem value="8">Agu</SelectItem>
+												<SelectItem value="9">Sep</SelectItem>
+												<SelectItem value="10">Okt</SelectItem>
+												<SelectItem value="11">Nov</SelectItem>
+												<SelectItem value="12">Des</SelectItem>
+											</SelectContent>
+										</Select>
 										<Input 
 											type="date"
 											value={historyDateFilter}
-											onChange={(e) => setHistoryDateFilter(e.target.value)}
-											className="w-full sm:w-[150px]"
+											onChange={(e) => { setHistoryDateFilter(e.target.value); setHistoryMonthFilter("all"); }}
+											className="w-full sm:w-[140px]"
 										/>
 									</div>
 								</CardHeader>
@@ -993,17 +1055,13 @@ export default function CheckoutPage() {
 												{(() => {
 													const filteredActivities = activities.filter(act => {
 														const searchStr = historySearchQuery.toLowerCase()
-														const matchSearch = !searchStr || 
-															(act.workOrder && act.workOrder.toLowerCase().includes(searchStr)) ||
+														if (!searchStr) return true
+														return (act.workOrder && act.workOrder.toLowerCase().includes(searchStr)) ||
 															(act.kingPartNumber && act.kingPartNumber.toLowerCase().includes(searchStr)) ||
 															(act.project && act.project.toLowerCase().includes(searchStr)) ||
 															(act.notes && act.notes.toLowerCase().includes(searchStr)) ||
 															(act.operator?.username && act.operator.username.toLowerCase().includes(searchStr)) ||
 															(act.createdBy?.name && act.createdBy.name.toLowerCase().includes(searchStr))
-														
-														const matchDate = !historyDateFilter || new Date(act.checkoutDate || act.createdAt).toISOString().split('T')[0] === historyDateFilter
-														
-														return matchSearch && matchDate
 													})
 
 													if (filteredActivities.length === 0) {
@@ -1025,7 +1083,7 @@ export default function CheckoutPage() {
 															</td>
 															<td className="px-4 py-3 font-medium">{act.items?.length || 0} Jenis Barang</td>
 															<td className="px-4 py-3">{act.operator?.username || act.createdBy?.name || "System"}</td>
-															<td className="px-4 py-3 whitespace-nowrap text-xs">{new Date(act.checkoutDate || act.createdAt).toLocaleString('id-ID')}</td>
+															<td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{new Date(act.checkoutDate || act.createdAt).toLocaleString('id-ID')}</td>
 														</tr>
 													))
 												})()}

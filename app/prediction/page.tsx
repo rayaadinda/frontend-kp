@@ -355,7 +355,7 @@ export default function PredictionPage() {
 							{/* Header */}
 							<div className="flex items-center justify-between">
 								<div>
-									<h1 className="text-2xl font-bold tracking-tight">Prediksi Kebutuhan Stok</h1>
+									<h1 className="text-2xl font-semibold tracking-tight">Prediksi Kebutuhan Stok</h1>
 									<p className="text-muted-foreground">
 										Analisis K-Means untuk klasifikasi pergerakan barang
 									</p>
@@ -385,7 +385,7 @@ export default function PredictionPage() {
 							{/* Header */}
 							<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 								<div>
-									<h1 className="text-2xl font-bold tracking-tight">Prediksi Kebutuhan Stok</h1>
+									<h1 className="text-2xl font-semibold tracking-tight">Prediksi Kebutuhan Stok</h1>
 									<p className="text-muted-foreground">
 										Hasil analisis K-Means terakhir — {new Date(latestRun.analysisDate).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
 									</p>
@@ -400,47 +400,66 @@ export default function PredictionPage() {
 
 							{/* — Ringkasan Statistik — */}
 							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-								<Card>
-									<CardHeader className="pb-2">
-										<CardDescription>Total Item Dianalisis</CardDescription>
-									</CardHeader>
-									<CardContent>
-										<div className="text-3xl font-bold">{latestRun.totalItems}</div>
-										<p className="text-xs text-muted-foreground mt-1">
-											Periode: {new Date(latestRun.periodeAwal).toLocaleDateString("id-ID", { month: "short", year: "numeric" })} – {new Date(latestRun.periodeAkhir).toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
+								<Card className="p-4 gap-3 shadow-sm rounded-lg border-border/50 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+									<div className="flex items-center gap-2">
+										<div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800">
+											<IconPackage className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+										</div>
+										<div className="text-sm font-medium text-muted-foreground">Total Item Dianalisis</div>
+									</div>
+									<div className="flex flex-col gap-2 mt-1">
+										<div className="text-2xl font-medium tracking-tight leading-none">
+											{latestRun.totalItems}
+										</div>
+										<p className="text-[11px] text-muted-foreground font-medium">
+											{new Date(latestRun.periodeAwal).toLocaleDateString("id-ID", { month: "short", year: "numeric" })} – {new Date(latestRun.periodeAkhir).toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
 										</p>
-									</CardContent>
+									</div>
 								</Card>
-								<Card>
-									<CardHeader className="pb-2">
-										<CardDescription>Jumlah Cluster (K)</CardDescription>
-									</CardHeader>
-									<CardContent>
-										<div className="text-3xl font-bold">{latestRun.jumlahCluster}</div>
-										<p className="text-xs text-muted-foreground mt-1">Metode: {latestRun.metode}</p>
-									</CardContent>
-								</Card>
-								<Card>
-									<CardHeader className="pb-2">
-										<CardDescription>Silhouette Score</CardDescription>
-									</CardHeader>
-									<CardContent>
-										<div className="flex items-baseline gap-2">
-											<span className="text-3xl font-bold text-green-600">{latestRun.silhouetteScore?.toFixed(4)}</span>
+
+								<Card className="p-4 gap-3 shadow-sm rounded-lg border-border/50 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+									<div className="flex items-center gap-2">
+										<div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800">
+											<IconChartDots className="w-4 h-4 text-slate-600 dark:text-slate-300" />
 										</div>
-										<p className="text-xs text-muted-foreground mt-1">Mendekati 1 = Clustering sangat baik</p>
-									</CardContent>
-								</Card>
-								<Card>
-									<CardHeader className="pb-2">
-										<CardDescription>Davies-Bouldin Index</CardDescription>
-									</CardHeader>
-									<CardContent>
-										<div className="flex items-baseline gap-2">
-											<span className="text-3xl font-bold text-blue-600">{latestRun.dbiScore?.toFixed(4)}</span>
+										<div className="text-sm font-medium text-muted-foreground">Jumlah Cluster (K)</div>
+									</div>
+									<div className="flex flex-col gap-2 mt-1">
+										<div className="text-2xl font-medium tracking-tight leading-none">
+											{latestRun.jumlahCluster}
 										</div>
-										<p className="text-xs text-muted-foreground mt-1">Mendekati 0 = Clustering sangat baik</p>
-									</CardContent>
+										<p className="text-[11px] text-muted-foreground font-medium">Metode: {latestRun.metode}</p>
+									</div>
+								</Card>
+
+								<Card className="p-4 gap-3 shadow-sm rounded-lg border-green-500/20 bg-green-500/5 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+									<div className="flex items-center gap-2">
+										<div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-950">
+											<IconGauge className="w-4 h-4 text-green-600 dark:text-green-500" />
+										</div>
+										<div className="text-sm font-medium text-green-700 dark:text-green-400">Silhouette Score</div>
+									</div>
+									<div className="flex flex-col gap-2 mt-1">
+										<div className="text-2xl font-medium tracking-tight leading-none text-green-600">
+											{latestRun.silhouetteScore?.toFixed(4)}
+										</div>
+										<p className="text-[11px] text-green-700/60 dark:text-green-400/60 font-medium">Mendekati 1 = Sangat baik</p>
+									</div>
+								</Card>
+
+								<Card className="p-4 gap-3 shadow-sm rounded-lg border-blue-500/20 bg-blue-500/5 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+									<div className="flex items-center gap-2">
+										<div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950">
+											<IconBrain className="w-4 h-4 text-blue-600 dark:text-blue-500" />
+										</div>
+										<div className="text-sm font-medium text-blue-700 dark:text-blue-400">Davies-Bouldin Index</div>
+									</div>
+									<div className="flex flex-col gap-2 mt-1">
+										<div className="text-2xl font-medium tracking-tight leading-none text-blue-600">
+											{latestRun.dbiScore?.toFixed(4)}
+										</div>
+										<p className="text-[11px] text-blue-700/60 dark:text-blue-400/60 font-medium">Mendekati 0 = Sangat baik</p>
+									</div>
 								</Card>
 							</div>
 
@@ -500,7 +519,7 @@ export default function PredictionPage() {
 																	if (viewBox && "cx" in viewBox && "cy" in viewBox) {
 																		return (
 																			<text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-																				<tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-2xl font-bold">
+																				<tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-2xl font-medium">
 																					{latestRun?.totalItems}
 																				</tspan>
 																				<tspan x={viewBox.cx} y={(viewBox.cy || 0) + 20} className="fill-muted-foreground text-xs">
@@ -613,15 +632,15 @@ export default function PredictionPage() {
 
 																return (
 																	<TableRow key={item.id} className={isOut ? "bg-red-50/50 dark:bg-red-950/20" : isLow ? "bg-amber-50/50 dark:bg-amber-950/20" : ""}>
-																		<TableCell className="font-bold text-muted-foreground">{idx + 1}</TableCell>
+																		<TableCell className="font-medium text-muted-foreground">{idx + 1}</TableCell>
 																		<TableCell className="font-mono text-sm font-medium">{item.inventory?.partNumber || "-"}</TableCell>
 																		<TableCell className="font-medium">{item.itemName}</TableCell>
 																		<TableCell className="text-right">{item.frekuensiTransaksi}x</TableCell>
-																		<TableCell className="text-right font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/10">{prediksiKebutuhan.toLocaleString("id-ID")}</TableCell>
-																		<TableCell className="text-right font-bold">
+																		<TableCell className="text-right font-semibold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/10">{prediksiKebutuhan.toLocaleString("id-ID")}</TableCell>
+																		<TableCell className="text-right font-medium">
 																			{qty}
 																		</TableCell>
-																		<TableCell className="text-right font-bold text-green-600 dark:text-green-400 bg-green-50/30 dark:bg-green-950/10">
+																		<TableCell className="text-right font-semibold text-green-600 dark:text-green-400 bg-green-50/30 dark:bg-green-950/10">
 																			{rekomendasiOrder > 0 ? `+${rekomendasiOrder.toLocaleString("id-ID")}` : "0"}
 																		</TableCell>
 																		<TableCell>
@@ -702,9 +721,9 @@ export default function PredictionPage() {
 																	<TableCell className="font-medium">{item.itemName}</TableCell>
 																	<TableCell className="text-right">{item.frekuensiTransaksi}</TableCell>
 																	<TableCell className="text-right">{item.totalPenggunaan.toLocaleString("id-ID")}</TableCell>
-																	<TableCell className="text-right font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/10">{prediksiKebutuhan.toLocaleString("id-ID")}</TableCell>
-																	<TableCell className="text-right font-bold">{qty}</TableCell>
-																	<TableCell className="text-right font-bold text-green-600 dark:text-green-400 bg-green-50/30 dark:bg-green-950/10">
+																	<TableCell className="text-right font-semibold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/10">{prediksiKebutuhan.toLocaleString("id-ID")}</TableCell>
+																	<TableCell className="text-right font-semibold">{qty}</TableCell>
+																	<TableCell className="text-right font-semibold text-green-600 dark:text-green-400 bg-green-50/30 dark:bg-green-950/10">
 																		{rekomendasiOrder > 0 ? `+${rekomendasiOrder.toLocaleString("id-ID")}` : "0"}
 																	</TableCell>
 																	<TableCell>

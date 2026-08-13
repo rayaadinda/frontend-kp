@@ -66,8 +66,18 @@ const data = {
 		},
 		{
 			title: "Laporan",
-			url: "/report",
+			url: "#",
 			icon: IconFileText,
+			items: [
+				{
+					title: "Saldo LEOCO",
+					url: "/report/leoco-balance"
+				},
+				{
+					title: "Laporan Umum",
+					url: "/report"
+				}
+			]
 		},
 	],
 	navSecondary: [

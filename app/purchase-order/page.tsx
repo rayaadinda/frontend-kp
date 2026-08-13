@@ -32,7 +32,7 @@ export default function PurchaseOrderPage() {
 							{/* Header */}
 							<div className="flex items-center justify-between">
 								<div>
-									<h1 className="text-2xl font-bold tracking-tight">Purchase Order</h1>
+									<h1 className="text-2xl font-semibold tracking-tight">Purchase Order</h1>
 									<p className="text-muted-foreground">
 										Buat dan kelola dokumen pembelian barang ke supplier
 									</p>
@@ -53,7 +53,7 @@ export default function PurchaseOrderPage() {
 											<FileText className="h-6 w-6 text-blue-600" />
 										</div>
 										<div>
-											<p className="text-2xl font-bold">—</p>
+											<p className="text-2xl font-medium">—</p>
 											<p className="text-sm text-muted-foreground">Total PO Dibuat</p>
 										</div>
 									</CardContent>
@@ -64,7 +64,7 @@ export default function PurchaseOrderPage() {
 											<ShoppingCart className="h-6 w-6 text-green-600" />
 										</div>
 										<div>
-											<p className="text-2xl font-bold">—</p>
+											<p className="text-2xl font-medium">—</p>
 											<p className="text-sm text-muted-foreground">PO Bulan Ini</p>
 										</div>
 									</CardContent>
@@ -75,7 +75,7 @@ export default function PurchaseOrderPage() {
 											<TrendingUp className="h-6 w-6 text-purple-600" />
 										</div>
 										<div>
-											<p className="text-2xl font-bold">—</p>
+											<p className="text-2xl font-medium">—</p>
 											<p className="text-sm text-muted-foreground">Total Nilai PO</p>
 										</div>
 									</CardContent>
@@ -132,7 +132,7 @@ export default function PurchaseOrderPage() {
 								].map((guide) => (
 									<Card key={guide.step} className="border-dashed">
 										<CardContent className="pt-6 flex gap-4">
-											<div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold flex-shrink-0">
+											<div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold flex-shrink-0">
 												{guide.step}
 											</div>
 											<div>

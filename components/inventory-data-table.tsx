@@ -189,7 +189,18 @@ export function InventoryDataTable({
 										<Badge variant="outline" className="font-mono text-xs">{item.workOrder || "GENERAL"}</Badge>
 									</TableCell>
 									<TableCell>{item.supplier}</TableCell>
-									<TableCell>{item.quantity} <span className="text-muted-foreground text-xs">{item.unit || 'Pcs'}</span></TableCell>
+									<TableCell>
+										<div className="flex flex-col">
+											<div>
+												{item.quantity} <span className="text-muted-foreground text-xs">{item.unit || 'Pcs'}</span>
+											</div>
+											{(item.unit === 'Meter' || (item.name && item.name.toLowerCase().includes('wire'))) && (
+												<div className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+													≈ {Math.ceil(item.quantity / 200)} roll(s)
+												</div>
+											)}
+										</div>
+									</TableCell>
 									<TableCell>
 										<Badge
 											variant={

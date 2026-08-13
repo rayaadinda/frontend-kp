@@ -235,7 +235,7 @@ export default function AddInventoryItemPage() {
 					<div className="bg-background border-b px-6 py-6 md:px-8 lg:px-10">
 						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 							<div>
-								<h1 className="text-3xl font-bold tracking-tight text-foreground">
+								<h1 className="text-3xl font-semibold tracking-tight text-foreground">
 									Penerimaan Material Reguler
 								</h1>
 								<p className="text-muted-foreground mt-1">
