@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { IconArrowLeft, IconPackage, IconHistory, IconMapPin, IconBuildingStore } from "@tabler/icons-react"
+import { IconArrowLeft, IconPackage, IconHistory, IconMapPin, IconBuildingStore, IconArrowUpRight, IconArrowDownRight, IconEdit } from "@tabler/icons-react"
 import { toast } from "sonner"
+import { Transaction } from "@/types"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
@@ -20,6 +21,7 @@ interface InventoryItemDetails {
 	partNumber: string
 	partName: string
 	quantity: number
+	unit: string
 	location: string
 	supplier: string
 }
@@ -30,6 +32,7 @@ export default function InventoryDetailPage() {
 	const id = params.id as string
 
 	const [item, setItem] = useState<InventoryItemDetails | null>(null)
+	const [activities, setActivities] = useState<Transaction[]>([])
 	const [loading, setLoading] = useState(true)
 
 	useEffect(() => {
@@ -48,6 +51,22 @@ export default function InventoryDetailPage() {
 				const foundItem = data.data.find((i: InventoryItemDetails) => i._id === id)
 				if (foundItem) {
 					setItem(foundItem)
+
+					// Fetch Activities
+					try {
+						const actRes = await fetch(`${API_URL}/api/activity?partNumber=${encodeURIComponent(foundItem.partNumber)}&limit=15`, {
+							headers: { Authorization: `Bearer ${token}` }
+						})
+						if (actRes.ok) {
+							const actData = await actRes.json()
+							if (actData.success) {
+								setActivities(actData.data)
+							}
+						}
+					} catch (e) {
+						console.error("Failed to fetch item activities", e)
+					}
+
 				} else {
 					throw new Error("Barang tidak ditemukan")
 				}
@@ -79,7 +98,7 @@ export default function InventoryDetailPage() {
 						<Button variant="outline" size="icon" onClick={() => router.push("/inventory")}>
 							<IconArrowLeft className="h-4 w-4" />
 						</Button>
-						<h1 className="text-2xl font-bold tracking-tight">Detail Barang</h1>
+						<h1 className="text-2xl font-semibold tracking-tight">Detail Barang</h1>
 					</div>
 
 					{loading ? (
@@ -111,7 +130,12 @@ export default function InventoryDetailPage() {
 										<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t">
 											<div className="flex flex-col gap-1">
 												<span className="text-sm text-muted-foreground flex items-center gap-1"><IconPackage className="h-4 w-4"/> Stok Aktual</span>
-												<span className="text-2xl font-bold">{item.quantity}</span>
+												<div className="flex flex-col">
+													<span className="text-2xl font-medium">{item.quantity} <span className="text-sm font-normal text-muted-foreground">{item.unit || 'Pcs'}</span></span>
+													{(item.unit === 'Meter' || (item.partName && item.partName.toLowerCase().includes('wire'))) && (
+														<span className="text-xs text-muted-foreground font-medium mt-0.5">≈ {Math.ceil(item.quantity / 200)} roll(s)</span>
+													)}
+												</div>
 											</div>
 											<div className="flex flex-col gap-1">
 												<span className="text-sm text-muted-foreground flex items-center gap-1"><IconMapPin className="h-4 w-4"/> Lokasi</span>
@@ -130,11 +154,47 @@ export default function InventoryDetailPage() {
 										<CardTitle className="flex items-center gap-2"><IconHistory className="h-5 w-5"/> Riwayat Aktivitas Terakhir</CardTitle>
 										<CardDescription>Log pergerakan barang (masuk/keluar)</CardDescription>
 									</CardHeader>
-									<CardContent>
-										<div className="text-sm text-muted-foreground">
-											Aktivitas akan ditampilkan di sini jika sudah ada relasi ke tabel aktivitas.
-											{/* TODO: Fetch and map activity logs here */}
-										</div>
+									<CardContent className="p-0">
+										{activities.length > 0 ? (
+											<div className="divide-y">
+												{activities.map((act) => {
+													const isOut = act.type === "checkout" || act.type === "leoco_production" || act.type === "delete"
+													const isIn = act.type === "stock_in" || act.type === "receiving" || act.type === "add"
+													return (
+														<div key={act.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+															<div className="flex items-center gap-3">
+																<div className={`p-2 rounded-full ${isOut ? "bg-red-100 text-red-600 dark:bg-red-900/30" : isIn ? "bg-green-100 text-green-600 dark:bg-green-900/30" : "bg-blue-100 text-blue-600 dark:bg-blue-900/30"}`}>
+																	{isOut ? <IconArrowUpRight className="h-4 w-4" /> : isIn ? <IconArrowDownRight className="h-4 w-4" /> : <IconEdit className="h-4 w-4" />}
+																</div>
+																<div>
+																	<p className="text-sm font-medium">
+																		{act.type === 'checkout' ? 'Barang Keluar' : 
+																		act.type === 'stock_in' || act.type === 'receiving' ? 'Barang Masuk' : 
+																		act.type === 'leoco_production' ? 'Produksi LEOCO' :
+																		act.type === 'add' ? 'Penambahan Stok' :
+																		act.type === 'update' ? 'Update Data' :
+																		'Aktivitas'}
+																		{act.workOrder && <span className="text-muted-foreground font-normal ml-1">(WO: {act.workOrder})</span>}
+																	</p>
+																	<p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{act.details || (act.quantity ? `Qty: ${act.quantity}` : "")}</p>
+																</div>
+															</div>
+															<div className="text-right flex flex-col justify-center">
+																<p className={`text-sm font-medium ${isOut ? "text-red-500" : isIn ? "text-green-500" : ""}`}>
+																	{isOut ? "-" : isIn ? "+" : ""}{act.quantity || 0}
+																</p>
+																<p className="text-[10px] text-muted-foreground">{new Date(act.createdAt).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}</p>
+															</div>
+														</div>
+													)
+												})}
+											</div>
+										) : (
+											<div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center justify-center">
+												<IconHistory className="h-8 w-8 text-muted-foreground/30 mb-2" />
+												Belum ada riwayat aktivitas untuk barang ini.
+											</div>
+										)}
 									</CardContent>
 								</Card>
 							</div>

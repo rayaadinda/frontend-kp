@@ -7,6 +7,9 @@ import { InventoryDataTable } from "@/components/inventory-data-table"
 import { InventoryDataTableSkeleton } from "@/components/inventory-data-table-skeleton"
 import { useEffect, useState } from "react"
 import { getAuthToken } from "@/lib/auth-token"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // API endpoint
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
@@ -16,9 +19,12 @@ interface InventoryItem {
 	name: string
 	supplier: string
 	quantity: number
+	unit: string
 	price: number
 	status: "In Stock" | "Low Stock" | "Out of Stock"
 	lastUpdated: string
+	workOrder: string
+	reference?: string
 }
 
 // Function to map backend data to frontend format
@@ -40,9 +46,12 @@ const mapApiDataToInventoryItem = (apiData: unknown): InventoryItem => {
 		name: item.partName as string,
 		supplier: (item.supplier as string) || "-",
 		quantity: item.quantity as number,
+		unit: (item.unit as string) || "Pcs",
 		price: 0,
 		status: status,
 		lastUpdated: new Date(item.lastUpdated as string).toLocaleDateString(),
+		workOrder: (item.workOrder as string) || "GENERAL",
+		reference: item.reference as string | undefined,
 	}
 }
 
@@ -50,6 +59,7 @@ export default function InventoryPage() {
 	const [inventory, setInventory] = useState<InventoryItem[]>([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState("")
+	const [selectedLeocoWo, setSelectedLeocoWo] = useState<string>("All")
 
 	// Fetch inventory data function
 	const fetchInventory = async () => {
@@ -118,7 +128,7 @@ export default function InventoryPage() {
 					<div className="@container/main flex flex-1 flex-col gap-2">
 						<div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
 							<div className="px-4 lg:px-6">
-								<h1 className="text-2xl font-bold tracking-tight">Inventory</h1>
+								<h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
 								<p className="text-muted-foreground">
 									Manage your inventory items and stock levels
 								</p>
@@ -132,10 +142,111 @@ export default function InventoryPage() {
 										<p className="text-red-500">{error}</p>
 									</div>
 								) : (
-									<InventoryDataTable
-										data={inventory}
-										onRefresh={fetchInventory}
-									/>
+									<Tabs defaultValue="Semua" className="w-full">
+										<TabsList className="mb-4 flex flex-wrap h-auto gap-1">
+											<TabsTrigger value="Semua">Semua Vendor</TabsTrigger>
+											<TabsTrigger value="LEOCO">LEOCO</TabsTrigger>
+											<TabsTrigger value="BSG">BSG</TabsTrigger>
+											<TabsTrigger value="YMK">YMK</TabsTrigger>
+											<TabsTrigger value="Lainnya">Lainnya</TabsTrigger>
+										</TabsList>
+										
+										<TabsContent value="Semua">
+											<Card>
+												<CardContent className="p-0 sm:p-6">
+													<InventoryDataTable data={inventory} onRefresh={fetchInventory} />
+												</CardContent>
+											</Card>
+										</TabsContent>
+
+										<TabsContent value="LEOCO" className="space-y-6">
+											{(() => {
+												const leocoData = inventory.filter(i => (i.supplier || "").toUpperCase() === "LEOCO")
+												if (leocoData.length === 0) return <div className="p-8 text-center text-muted-foreground border rounded-lg">Tidak ada stok dari LEOCO</div>
+
+												// Map Work Order ke King Part (reference)
+												const woMap = new Map<string, string>()
+												leocoData.forEach(i => {
+													if (i.workOrder && !woMap.has(i.workOrder)) {
+														woMap.set(i.workOrder, i.reference || "Unknown Target Produksi")
+													}
+												})
+												
+												// Filter the data based on selected WO
+												const displayedData = selectedLeocoWo === "All" 
+													? leocoData 
+													: leocoData.filter(i => i.workOrder === selectedLeocoWo)
+
+												return (
+													<Card>
+														<CardHeader className="bg-muted/30 pb-4 border-b">
+															<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+																<div>
+																	<CardTitle className="text-lg">Inventaris LEOCO</CardTitle>
+																	<CardDescription>Filter dan lihat material LEOCO berdasarkan Work Order spesifik.</CardDescription>
+																</div>
+																<Select value={selectedLeocoWo} onValueChange={setSelectedLeocoWo}>
+																	<SelectTrigger className="w-full sm:w-[350px]">
+																		<SelectValue placeholder="Pilih Work Order & King Part" />
+																	</SelectTrigger>
+																	<SelectContent>
+																		<SelectItem value="All">Semua Work Order</SelectItem>
+																		{Array.from(woMap.entries()).map(([wo, kingPart]) => (
+																			<SelectItem key={wo} value={wo}>
+																				WO: <span className="font-medium text-primary">{wo}</span> — ({kingPart})
+																			</SelectItem>
+																		))}
+																	</SelectContent>
+																</Select>
+															</div>
+														</CardHeader>
+														<CardContent className="p-0 sm:p-6 pt-4">
+															<InventoryDataTable 
+																data={displayedData} 
+																onRefresh={fetchInventory} 
+															/>
+														</CardContent>
+													</Card>
+												)
+											})()}
+										</TabsContent>
+
+										<TabsContent value="BSG">
+											<Card>
+												<CardContent className="p-0 sm:p-6">
+													<InventoryDataTable 
+														data={inventory.filter(i => (i.supplier || "").toUpperCase() === "BSG")} 
+														onRefresh={fetchInventory} 
+													/>
+												</CardContent>
+											</Card>
+										</TabsContent>
+
+										<TabsContent value="YMK">
+											<Card>
+												<CardContent className="p-0 sm:p-6">
+													<InventoryDataTable 
+														data={inventory.filter(i => (i.supplier || "").toUpperCase() === "YMK")} 
+														onRefresh={fetchInventory} 
+													/>
+												</CardContent>
+											</Card>
+										</TabsContent>
+
+										<TabsContent value="Lainnya">
+											<Card>
+												<CardContent className="p-0 sm:p-6">
+													<InventoryDataTable 
+														data={inventory.filter(i => {
+															const sup = (i.supplier || "").toUpperCase()
+															return sup !== "LEOCO" && sup !== "BSG" && sup !== "YMK"
+														})} 
+														onRefresh={fetchInventory} 
+													/>
+												</CardContent>
+											</Card>
+										</TabsContent>
+									</Tabs>
 								)}
 							</div>
 						</div>

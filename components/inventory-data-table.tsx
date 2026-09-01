@@ -41,9 +41,11 @@ export const inventorySchema = z.object({
 	name: z.string(),
 	supplier: z.string(),
 	quantity: z.number(),
+	unit: z.string().optional(),
 	price: z.number(),
 	status: z.enum(["In Stock", "Low Stock", "Out of Stock"]),
 	lastUpdated: z.string(),
+	workOrder: z.string().optional(),
 })
 
 type InventoryItem = z.infer<typeof inventorySchema>
@@ -166,6 +168,7 @@ export function InventoryDataTable({
 					<TableHeader>
 						<TableRow>
 							<TableHead>Name</TableHead>
+							<TableHead>Work Order</TableHead>
 							<TableHead>Supplier</TableHead>
 							<TableHead>Quantity</TableHead>
 							<TableHead>Status</TableHead>
@@ -182,8 +185,22 @@ export function InventoryDataTable({
 									onClick={() => router.push(`/inventory/${item.id}`)}
 								>
 									<TableCell className="font-medium">{item.name}</TableCell>
+									<TableCell>
+										<Badge variant="outline" className="font-mono text-xs">{item.workOrder || "GENERAL"}</Badge>
+									</TableCell>
 									<TableCell>{item.supplier}</TableCell>
-									<TableCell>{item.quantity}</TableCell>
+									<TableCell>
+										<div className="flex flex-col">
+											<div>
+												{item.quantity} <span className="text-muted-foreground text-xs">{item.unit || 'Pcs'}</span>
+											</div>
+											{(item.unit === 'Meter' || (item.name && item.name.toLowerCase().includes('wire'))) && (
+												<div className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+													≈ {Math.ceil(item.quantity / 200)} roll(s)
+												</div>
+											)}
+										</div>
+									</TableCell>
 									<TableCell>
 										<Badge
 											variant={

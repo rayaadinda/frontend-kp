@@ -11,6 +11,7 @@ import {
 	IconInnerShadowTop,
 	IconReport,
 	IconSettings,
+	IconShoppingCart,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -54,9 +55,29 @@ const data = {
 			icon: IconFileAi,
 		},
 		{
+			title: "Master B.O.M",
+			url: "/bom",
+			icon: IconReport,
+		},
+		{
+			title: "Purchase Order",
+			url: "/purchase-order",
+			icon: IconShoppingCart,
+		},
+		{
 			title: "Laporan",
-			url: "/report",
+			url: "#",
 			icon: IconFileText,
+			items: [
+				{
+					title: "Saldo LEOCO",
+					url: "/report/leoco-balance"
+				},
+				{
+					title: "Laporan Umum",
+					url: "/report"
+				}
+			]
 		},
 	],
 	navSecondary: [
